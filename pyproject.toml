@@ -5,3 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["evan_tools"]
