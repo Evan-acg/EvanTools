@@ -134,6 +134,7 @@ class AutoDeployer:
                 shutil.copy2(source, destination)
 
             typer.secho("部署成功！", fg=typer.colors.GREEN, bold=True)
+            typer.echo(f"部署位置： {destination}")
         except Exception as e:
             typer.secho(f"部署失败：{e}", fg=typer.colors.RED, bold=True)
             raise typer.Exit(code=1)
