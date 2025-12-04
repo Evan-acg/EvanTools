@@ -119,11 +119,13 @@ class AutoDeployer:
             )
             raise typer.Exit(code=1)
 
-        destination = (
-            target_folder / self.config.name
-            if self.config.use_one_dir
-            else target_folder / f"{self.config.name}.exe"
-        )
+        # destination = (
+        #     target_folder / self.config.name
+        #     if self.config.use_one_dir
+        #     else target_folder / f"{self.config.name}.exe"
+        # )
+
+        destination = target_folder / f"{self.config.name}.exe"
 
         try:
             target_folder.mkdir(parents=True, exist_ok=True)
