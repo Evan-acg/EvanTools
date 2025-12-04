@@ -101,6 +101,7 @@ class AutoDeployer:
             typer.secho("✗ dist文件夹不存在，请先执行 build 命令", fg=typer.colors.RED)
             raise typer.Exit(code=1)
 
+        # 1. 确保目标路径存在
         try:
             target_folder.mkdir(parents=True, exist_ok=True)
         except Exception as e:
@@ -109,35 +110,42 @@ class AutoDeployer:
 
         try:
             if self.config.use_one_dir:
-                source_dir = self.dist_path / self.config.name
+                source_dir = self.dist_path / self.config.name  # e.g., dist/Video
 
                 if not source_dir.exists():
                     typer.secho(f"✗ 找不到构建目录: {source_dir}", fg=typer.colors.RED)
                     raise typer.Exit(code=1)
 
-                typer.echo(f"正在将 {source_dir} 的内容复制到 {target_folder}...")
+                typer.echo(
+                    f"\n正在将构建目录 ({source_dir}) 的内容复制到目标目录 ({target_folder})..."
+                )
 
+                # 遍历构建目录下的所有文件和文件夹
                 for item in source_dir.iterdir():
                     destination = target_folder / item.name
 
                     if item.is_dir():
+                        typer.echo(f"  - 复制子目录: {item.name} -> {destination}")
                         shutil.copytree(item, destination, dirs_exist_ok=True)
                     else:
+                        typer.echo(f"  - 复制文件: {item.name} -> {destination}")
                         shutil.copy2(item, destination)
 
             else:
+                # 单文件模式：直接复制 exe 文件到目标目录
                 source_file = self.dist_path / f"{self.config.name}.exe"
                 if not source_file.exists():
                     typer.secho(f"✗ 找不到构建文件: {source_file}", fg=typer.colors.RED)
                     raise typer.Exit(code=1)
 
                 destination = target_folder / f"{self.config.name}.exe"
+                typer.echo(f"  - 复制文件: {source_file} -> {destination}")
                 shutil.copy2(source_file, destination)
 
-            typer.secho("✓ 部署成功!", fg=typer.colors.GREEN, bold=True)
+            typer.secho("\n✓ 部署成功!", fg=typer.colors.GREEN, bold=True)
 
         except Exception as e:
-            typer.secho(f"✗ 部署失败: {e}", fg=typer.colors.RED)
+            typer.secho(f"\n✗ 部署失败: {e}", fg=typer.colors.RED)
             raise typer.Exit(code=1)
 
 
