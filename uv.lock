@@ -28,11 +28,24 @@ name = "evan-tools"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "humanize" },
     { name = "typer" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "typer", specifier = ">=0.20.0" }]
+requires-dist = [
+    { name = "humanize", specifier = ">=4.14.0" },
+    { name = "typer", specifier = ">=0.20.0" },
+]
+
+[[package]]
+name = "humanize"
+version = "4.14.0"
+source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/b6/43/50033d25ad96a7f3845f40999b4778f753c3901a11808a584fed7c00d9f5/humanize-4.14.0.tar.gz", hash = "sha256:2fa092705ea640d605c435b1ca82b2866a1b601cdf96f076d70b79a855eba90d", size = 82939 }
+wheels = [
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/c3/5b/9512c5fb6c8218332b530f13500c6ff5f3ce3342f35e0dd7be9ac3856fd3/humanize-4.14.0-py3-none-any.whl", hash = "sha256:d57701248d040ad456092820e6fde56c930f17749956ac47f4f655c0c547bfff", size = 132092 },
+]
 
 [[package]]
 name = "markdown-it-py"
