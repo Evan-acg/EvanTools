@@ -1,4 +1,3 @@
-from operator import add
 import shutil
 import subprocess
 import sys
@@ -94,58 +93,51 @@ class AutoDeployer:
             typer.secho(f"构建失败！ {e}", fg=typer.colors.RED, bold=True)
             sys.exit(1)
 
-    def deploy(self, target_folder: Path) -> None:
-        """部署"""
-        typer.secho(f"部署到 {target_folder}...", fg=typer.colors.BLUE)
+    def deploy(self, target_folder: Path):
+        """执行部署逻辑"""
+        typer.secho(f"🚚 开始部署到: {target_folder}", fg=typer.colors.CYAN)
 
         if not self.dist_path.exists():
-            typer.secho(
-                "部署失败：找不到构建输出目录。请先构建项目。",
-                fg=typer.colors.RED,
-                bold=True,
-            )
+            typer.secho("✗ dist文件夹不存在，请先执行 build 命令", fg=typer.colors.RED)
             raise typer.Exit(code=1)
-
-        if self.config.use_one_dir:
-            source = self.dist_path / self.config.name
-        else:
-            source = self.dist_path / f"{self.config.name}.exe"
-
-        if not source.exists():
-            typer.secho(
-                "部署失败：找不到可执行文件。请先构建项目。",
-                fg=typer.colors.RED,
-                bold=True,
-            )
-            raise typer.Exit(code=1)
-
-        # destination = (
-        #     target_folder / self.config.name
-        #     if self.config.use_one_dir
-        #     else target_folder / f"{self.config.name}.exe"
-        # )
-
-        destination = target_folder / f"{self.config.name}.exe"
 
         try:
             target_folder.mkdir(parents=True, exist_ok=True)
-
-            # remove existing files
-            if destination.exists():
-                if self.config.use_one_dir:
-                    shutil.rmtree(destination)
-                else:
-                    destination.unlink()
-
-            if self.config.use_one_dir:
-                shutil.copytree(source, destination, dirs_exist_ok=True)
-            else:
-                shutil.copy2(source, destination)
-
-            typer.secho("部署成功！", fg=typer.colors.GREEN, bold=True)
-            typer.echo(f"部署位置： {destination}")
         except Exception as e:
-            typer.secho(f"部署失败：{e}", fg=typer.colors.RED, bold=True)
+            typer.secho(f"✗ 创建目标文件夹失败: {e}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+
+        try:
+            if self.config.use_one_dir:
+                source_dir = self.dist_path / self.config.name
+
+                if not source_dir.exists():
+                    typer.secho(f"✗ 找不到构建目录: {source_dir}", fg=typer.colors.RED)
+                    raise typer.Exit(code=1)
+
+                typer.echo(f"正在将 {source_dir} 的内容复制到 {target_folder}...")
+
+                for item in source_dir.iterdir():
+                    destination = target_folder / item.name
+
+                    if item.is_dir():
+                        shutil.copytree(item, destination, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(item, destination)
+
+            else:
+                source_file = self.dist_path / f"{self.config.name}.exe"
+                if not source_file.exists():
+                    typer.secho(f"✗ 找不到构建文件: {source_file}", fg=typer.colors.RED)
+                    raise typer.Exit(code=1)
+
+                destination = target_folder / f"{self.config.name}.exe"
+                shutil.copy2(source_file, destination)
+
+            typer.secho("✓ 部署成功!", fg=typer.colors.GREEN, bold=True)
+
+        except Exception as e:
+            typer.secho(f"✗ 部署失败: {e}", fg=typer.colors.RED)
             raise typer.Exit(code=1)
 
 
