@@ -169,4 +169,6 @@ def run_deployer(config: ProjectConfig) -> None:
         deployer.deploy(folder)
 
     if __name__ == "__main__":
-        app()
+        pass
+
+    app()
