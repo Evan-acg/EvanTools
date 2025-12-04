@@ -139,7 +139,7 @@ class AutoDeployer:
             raise typer.Exit(code=1)
 
 
-def run_release(config: ProjectConfig) -> None:
+def run_deployer(config: ProjectConfig) -> None:
     app = typer.Typer(help="自动化构建和部署工具", add_completion=False)
     deployer = AutoDeployer(config)
 
