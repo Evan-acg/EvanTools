@@ -1,3 +1,4 @@
+from operator import add
 import shutil
 import subprocess
 import sys
@@ -136,3 +137,37 @@ class AutoDeployer:
         except Exception as e:
             typer.secho(f"部署失败：{e}", fg=typer.colors.RED, bold=True)
             raise typer.Exit(code=1)
+
+
+def run_release(config: ProjectConfig) -> None:
+    app = typer.Typer(help="自动化构建和部署工具", add_completion=False)
+    deployer = AutoDeployer(config)
+
+    @app.command()
+    def build():
+        deployer.build()
+
+    @app.command()
+    def deploy(
+        folder: Path = typer.Option(
+            config.default_deploy_path,
+            "-f",
+            "--folder",
+            help="部署目标文件夹路径",
+        ),
+    ) -> None:
+        deployer.deploy(folder)
+
+    @app.command()
+    def release(
+        folder: Path = typer.Option(
+            config.default_deploy_path, "-f", "--folder", help="部署目标文件夹路径"
+        ),
+    ) -> None:
+        deployer.build()
+        deployer.deploy(folder)
+
+    if __name__ == "__main__":
+        pass
+
+    app()
