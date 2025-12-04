@@ -130,6 +130,13 @@ class AutoDeployer:
         try:
             target_folder.mkdir(parents=True, exist_ok=True)
 
+            # remove existing files
+            if destination.exists():
+                if self.config.use_one_dir:
+                    shutil.rmtree(destination)
+                else:
+                    destination.unlink()
+
             if self.config.use_one_dir:
                 shutil.copytree(source, destination, dirs_exist_ok=True)
             else:
