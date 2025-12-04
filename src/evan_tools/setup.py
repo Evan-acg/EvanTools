@@ -93,6 +93,15 @@ class AutoDeployer:
             typer.secho(f"构建失败！ {e}", fg=typer.colors.RED, bold=True)
             sys.exit(1)
 
+    def _clean_old_deployments(self, target_folder: Path) -> None:
+        """清理目标文件夹中的旧部署文件。"""
+
+        target_exec_path = target_folder / f"{self.config.name}"
+        target_exec_internal_path = target_folder / f"{self.config.name}_Internal"
+
+        target_exec_path.unlink(missing_ok=True)
+        shutil.rmtree(target_exec_internal_path, ignore_errors=True)
+
     def deploy(self, target_folder: Path):
         """执行部署逻辑"""
         typer.secho(f"🚚 开始部署到: {target_folder}", fg=typer.colors.CYAN)
@@ -101,52 +110,14 @@ class AutoDeployer:
             typer.secho("✗ dist文件夹不存在，请先执行 build 命令", fg=typer.colors.RED)
             raise typer.Exit(code=1)
 
-        # 1. 确保目标路径存在
-        try:
-            target_folder.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            typer.secho(f"✗ 创建目标文件夹失败: {e}", fg=typer.colors.RED)
-            raise typer.Exit(code=1)
+        self._clean_old_deployments(target_folder)
 
-        try:
-            if self.config.use_one_dir:
-                source_dir = self.dist_path / self.config.name  # e.g., dist/Video
+        shutil.copytree(
+            self.dist_path / self.config.name, target_folder, dirs_exist_ok=True
+        )
 
-                if not source_dir.exists():
-                    typer.secho(f"✗ 找不到构建目录: {source_dir}", fg=typer.colors.RED)
-                    raise typer.Exit(code=1)
+        typer.secho("✔ 部署完成！", fg=typer.colors.GREEN, bold=True)
 
-                typer.echo(
-                    f"\n正在将构建目录 ({source_dir}) 的内容复制到目标目录 ({target_folder})..."
-                )
-
-                # 遍历构建目录下的所有文件和文件夹
-                for item in source_dir.iterdir():
-                    destination = target_folder / item.name
-
-                    if item.is_dir():
-                        typer.echo(f"  - 复制子目录: {item.name} -> {destination}")
-                        shutil.copytree(item, destination, dirs_exist_ok=True)
-                    else:
-                        typer.echo(f"  - 复制文件: {item.name} -> {destination}")
-                        shutil.copy2(item, destination)
-
-            else:
-                # 单文件模式：直接复制 exe 文件到目标目录
-                source_file = self.dist_path / f"{self.config.name}.exe"
-                if not source_file.exists():
-                    typer.secho(f"✗ 找不到构建文件: {source_file}", fg=typer.colors.RED)
-                    raise typer.Exit(code=1)
-
-                destination = target_folder / f"{self.config.name}.exe"
-                typer.echo(f"  - 复制文件: {source_file} -> {destination}")
-                shutil.copy2(source_file, destination)
-
-            typer.secho("\n✓ 部署成功!", fg=typer.colors.GREEN, bold=True)
-
-        except Exception as e:
-            typer.secho(f"\n✗ 部署失败: {e}", fg=typer.colors.RED)
-            raise typer.Exit(code=1)
 
 
 def run_deployer(config: ProjectConfig) -> None:
