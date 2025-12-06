@@ -148,9 +148,10 @@ def run_deployer(config: ProjectConfig) -> None:
             folder: Path = typer.Option(
                 config.default_deploy_path, "-f", "--folder", help="部署目标文件夹路径"
             ),
+            clean_dist: bool = typer.Option(True, "-c", "--clean-dist", help="是否清除dist文件夹")
     ) -> None:
         deployer.build()
-        deployer.deploy(folder)
+        deployer.deploy(folder, clean_dist=clean_dist)
 
     if __name__ == "__main__":
         pass
