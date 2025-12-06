@@ -13,4 +13,7 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["evan_tools"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["evan_tools*"]
