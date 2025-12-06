@@ -102,7 +102,7 @@ class AutoDeployer:
         target_exec_path.unlink(missing_ok=True)
         shutil.rmtree(target_exec_internal_path, ignore_errors=True)
 
-    def deploy(self, target_folder: Path):
+    def deploy(self, target_folder: Path, *, clean_dist: bool = True) -> None:
         """执行部署逻辑"""
         typer.secho(f"🚚 开始部署到: {target_folder}", fg=typer.colors.CYAN)
 
@@ -118,6 +118,9 @@ class AutoDeployer:
 
         typer.secho("✔ 部署完成！", fg=typer.colors.GREEN, bold=True)
 
+        if clean_dist:
+            shutil.rmtree(self.dist_path)
+            shutil.rmtree(self.build_path)
 
 
 def run_deployer(config: ProjectConfig) -> None:
@@ -130,20 +133,21 @@ def run_deployer(config: ProjectConfig) -> None:
 
     @app.command()
     def deploy(
-        folder: Path = typer.Option(
-            config.default_deploy_path,
-            "-f",
-            "--folder",
-            help="部署目标文件夹路径",
-        ),
+            folder: Path = typer.Option(
+                config.default_deploy_path,
+                "-f",
+                "--folder",
+                help="部署目标文件夹路径",
+            ),
+            clean_dist: bool = typer.Option(True, "-c", "--clean-dist", help="是否清除dist文件夹")
     ) -> None:
-        deployer.deploy(folder)
+        deployer.deploy(folder, clean_dist=clean_dist)
 
     @app.command()
     def release(
-        folder: Path = typer.Option(
-            config.default_deploy_path, "-f", "--folder", help="部署目标文件夹路径"
-        ),
+            folder: Path = typer.Option(
+                config.default_deploy_path, "-f", "--folder", help="部署目标文件夹路径"
+            ),
     ) -> None:
         deployer.build()
         deployer.deploy(folder)
