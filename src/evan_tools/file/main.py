@@ -34,7 +34,7 @@ def _gather_flat(
     path: Path,
     dir_only: bool,
     path_filter: t.Callable[[Path], bool],
-) -> t.Iterator[Path]:
+) -> t.Iterable[Path]:
     try:
         with os.scandir(path) as entries:
             for entry in entries:
