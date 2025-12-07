@@ -18,7 +18,7 @@ def _handle_root_path(
     path: Path,
     dir_only: bool,
     path_filter: t.Callable[[Path], bool],
-) -> t.Iterator[Path]:
+) -> t.Iterable[Path]:
     if not path.exists():
         return
 
@@ -55,7 +55,7 @@ def _gather_recursive(
     max_depth: int,
     dir_only: bool,
     path_filter: t.Callable[[Path], bool],
-) -> t.Iterator[Path]:
+) -> t.Iterable[Path]:
     try:
         for root, dirs, files in os.walk(path):
             rp = Path(root)
@@ -93,7 +93,7 @@ def gather_paths(
     deep: bool | int = False,
     dir_only: bool = False,
     filter: t.Callable[[Path], bool] | None = None,
-) -> t.Iterator[Path]:
+) -> t.Iterable[Path]:
     """
     递归或非递归地收集指定路径下的文件或目录。
 
@@ -110,7 +110,7 @@ def gather_paths(
             接收Path对象，返回True则该路径被包含在结果中。
 
     返回值：
-        Iterator[Path]: 满足条件的路径迭代器。
+        t.Iterable[Path]: 满足条件的路径迭代器。
     """
 
     path_filter = filter or (lambda _: True)
