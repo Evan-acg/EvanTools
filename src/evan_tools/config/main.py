@@ -157,14 +157,20 @@ def load_config(path: Path | None = None) -> None:
         _rw_lock.release_write()
 
 
-def get_config() -> dict[str, t.Any]:
+PathT = t.Union[t.Hashable, t.List[t.Hashable]]
+
+
+def get_config(path: PathT | None = None, _default: t.Any = None) -> dict[str, t.Any]:
     """拿到完整配置（读锁）+ 自动检查文件变化"""
     _reload_if_needed()
 
     _rw_lock.acquire_read()
     try:
         assert _cfg is not None
-        return deepcopy(_cfg)
+        _o = deepcopy(_cfg)
+        if path is None:
+            return _o
+        return pydash.get(_o, path, _default)
     finally:
         _rw_lock.release_read()
 
