@@ -1,8 +1,8 @@
-def duration(seconds: int, fmt: str = "hh:mm:ss") -> str:
+def duration(seconds: int | float, fmt: str = "hh:mm:ss") -> str:
     """Convert a duration in seconds to a formatted string.
 
     Args:
-        seconds (int): The duration in seconds.
+        seconds (int | float): The duration in seconds.
         fmt (str, optional): The format string. Defaults to "hh:mm:ss".
             Supported tokens:
                 - hh: hours (zero-padded)
