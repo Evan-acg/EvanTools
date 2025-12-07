@@ -16,8 +16,8 @@ def duration(seconds: int | float, fmt: str = "hh:mm:ss") -> str:
     secs = seconds % 60
 
     formatted = fmt
-    formatted = formatted.replace("hh", f"{hours:02}")
-    formatted = formatted.replace("mm", f"{minutes:02}")
-    formatted = formatted.replace("ss", f"{secs:02}")
+    formatted = formatted.replace("hh", f"{int(hours)}".zfill(2))
+    formatted = formatted.replace("mm", f"{int(minutes)}".zfill(2))
+    formatted = formatted.replace("ss", f"{int(secs)}".zfill(2))
 
     return formatted
