@@ -1,6 +1,12 @@
 import typing as t
 
-from . import config, file, md5, registry, setup, time, tui
+from .config import *
+from .file import *
+from .md5 import *
+from .registry import *
+from .setup import *
+from .time import *
+from .tui import *
 
 if t.TYPE_CHECKING:
     pass
