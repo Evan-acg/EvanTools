@@ -1,5 +1,4 @@
 # flake8: noqa: F401, F403, F405
-import typing as t
 
 from .config import *
 from .file import *
