@@ -1,3 +1,4 @@
+# flake8: noqa: F401, F403, F405
 import typing as t
 
 from .config import *
@@ -7,9 +8,6 @@ from .registry import *
 from .setup import *
 from .time import *
 from .tui import *
-
-if t.TYPE_CHECKING:
-    pass
 
 __all__ = []
 __all__.extend(config.__all__)
