@@ -41,13 +41,15 @@ def register_with_typer(app: typer.Typer) -> None:
         group_apps[group].command(name)(func)
 
 
-def load_commands(module_src: str) -> None:
+def load_commands(module_src: str, *, verbose: bool = False) -> None:
     m = importlib.import_module(module_src)
 
     prefix: str = f"{module_src}."
 
     for _, name, is_pkg in pkgutil.iter_modules(m.__path__):
         module_name = f"{prefix}{name}"
+        if verbose:
+            print(f"Loading commands from module: {module_name}")
         importlib.import_module(module_name)
         if is_pkg:
-            load_commands(module_name)
+            load_commands(module_name, verbose=verbose)
