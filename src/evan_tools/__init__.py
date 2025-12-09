@@ -2,6 +2,7 @@
 
 from .config import *
 from .file import *
+from .importer import *
 from .md5 import *
 from .registry import *
 from .setup import *
@@ -16,3 +17,4 @@ __all__.extend(registry.__all__)
 __all__.extend(setup.__all__)
 __all__.extend(time.__all__)
 __all__.extend(tui.__all__)
+__all__.extend(importer.__all__)
