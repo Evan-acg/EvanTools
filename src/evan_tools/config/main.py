@@ -160,7 +160,19 @@ def load_config(path: Path | None = None) -> None:
 PathT = t.Union[t.Hashable, t.List[t.Hashable]]
 
 
-def get_config(path: PathT | None = None, _default: t.Any = None) -> dict[str, t.Any]:
+@t.overload
+def get_config[T](path: int, _default: T) -> T: ...
+
+
+@t.overload
+def get_config[T](path: int, _default: T | None = None) -> t.Union[T, None]: ...
+
+
+@t.overload
+def get_config(path: t.Any, _default: t.Any = None) -> t.Any: ...
+
+
+def get_config(path: PathT | None = None, _default: t.Any = None) -> t.Any:
     """拿到完整配置（读锁）+ 自动检查文件变化"""
     _reload_if_needed()
 
