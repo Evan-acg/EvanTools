@@ -161,18 +161,18 @@ PathT = t.Union[t.Hashable, t.List[t.Hashable]]
 
 
 @t.overload
-def get_config[T](path: int, _default: T) -> T: ...
+def get_config[T](path: PathT, default: T) -> T: ...
 
 
 @t.overload
-def get_config[T](path: int, _default: T | None = None) -> t.Union[T, None]: ...
+def get_config[T](path: PathT, default: None = None) -> T | None: ...
 
 
 @t.overload
-def get_config(path: t.Any, _default: t.Any = None) -> t.Any: ...
+def get_config(path: None = None, default: t.Any = None) -> t.Any: ...
 
 
-def get_config(path: PathT | None = None, _default: t.Any = None) -> t.Any:
+def get_config(path: PathT | None = None, default: t.Any = None) -> t.Any:
     """拿到完整配置（读锁）+ 自动检查文件变化"""
     _reload_if_needed()
 
@@ -182,7 +182,7 @@ def get_config(path: PathT | None = None, _default: t.Any = None) -> t.Any:
         _o = deepcopy(_cfg)
         if path is None:
             return _o
-        return pydash.get(_o, path, _default)
+        return pydash.get(_o, path, default)
     finally:
         _rw_lock.release_read()
 
