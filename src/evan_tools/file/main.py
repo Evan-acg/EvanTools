@@ -88,7 +88,7 @@ def _gather_recursive(
 
 
 def gather_paths(
-    paths: t.Iterable[Path],
+    paths: t.Iterable[Path | str],
     *,
     deep: bool | int = False,
     dir_only: bool = False,
@@ -117,6 +117,7 @@ def gather_paths(
     max_depth, recursive = _process_depth(deep)
 
     for path in paths:
+        path = Path(path)
         yield from _handle_root_path(path, dir_only, path_filter)
 
         if not path.is_dir():
