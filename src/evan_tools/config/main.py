@@ -102,10 +102,18 @@ def _load_config_unlocked(path: Path | None = None) -> None:
     merged: dict[str, t.Any] = {}
     _config_path_keys.clear()
 
+    # sorted by priority
+
+    contents: list[dict[str, t.Any]] = []
     for p in config_paths:
         item = _read_yaml_cached(p)
         key_paths = _collect_key_paths(item)
         _config_path_keys[p] = key_paths
+        contents.append(item)
+
+    sorted_contents = sorted(contents, key=lambda o: o.get("priority", -1))
+
+    for item in sorted_contents:
         pydash.merge(merged, item)
 
     _cfg = merged
