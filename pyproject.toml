@@ -1,9 +1,13 @@
 [project]
-name = "evan_tools"
+name = "evan-tools"
 version = "0.2.0"
-description = "Add your description here"
+description = "It's a set of tools for Evan's development."
 readme = "README.md"
 requires-python = ">=3.13"
+authors = [
+    { name = "Evan", email = "evanstonlaw555@gmail.com" },
+    { name = "Evan", email = "kaluoshilong@qq.com" },
+]
 dependencies = [
     "humanize>=4.14.0",
     "pydash>=8.0.5",
@@ -11,8 +15,12 @@ dependencies = [
     "typer>=0.20.0",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
