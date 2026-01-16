@@ -6,7 +6,24 @@ on:
     paths:
       - "pyproject.toml"
 jobs:
+  test-install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Setup Python
+        run: uv python install
+      - name: Test Local Installation
+        run: |
+          uv venv test_env
+          source test_env/bin/activate
+          uv pip install .
+
   publish:
+    needs: test-install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
