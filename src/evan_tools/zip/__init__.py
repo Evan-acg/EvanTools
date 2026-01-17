@@ -1,3 +1,3 @@
-from .check import zip_type
+from .check import zip_type, ZipType, is_encrypted
 
-__all__ = ["zip_type"]
+__all__ = ["zip_type", "ZipType", "is_encrypted"]
