@@ -12,3 +12,24 @@ wheels/
 # IDE files
 .idea/
 .vscode/
+
+# cache
+__pypackages__/
+*.log
+*.cache
+*.tmp
+*.bak
+*.swp
+.DS_Store
+thumbs.db
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/   
+
+# test
+tests/
+play/
