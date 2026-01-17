@@ -2,13 +2,14 @@
 
 from .config import *
 from .file import *
+from .folder import *
 from .importer import *
 from .md5 import *
 from .registry import *
 from .setup import *
 from .time import *
 from .tui import *
-from .folder import *
+from .zip import *
 
 __all__ = []
 __all__.extend(config.__all__)
@@ -20,3 +21,4 @@ __all__.extend(time.__all__)
 __all__.extend(tui.__all__)
 __all__.extend(importer.__all__)
 __all__.extend(folder.__all__)
+__all__.extend(zip.__all__)
