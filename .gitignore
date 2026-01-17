@@ -33,3 +33,6 @@ htmlcov/
 # test
 tests/
 play/
+
+# uv lock file
+uv.lock
