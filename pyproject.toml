@@ -3,7 +3,7 @@ name = "evan-tools"
 version = "0.3.1"
 description = "It's a set of tools for Evan's development."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 authors = [
     { name = "Evan", email = "evanstonlaw555@gmail.com" },
     { name = "Evan", email = "kaluoshilong@qq.com" },

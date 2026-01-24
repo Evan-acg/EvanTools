@@ -48,6 +48,7 @@ _file_cache: dict[Path, dict[str, t.Any]] = {}
 _rw_lock = RWLock()
 _last_reload_time: float = 0  # 上次检查文件的时间戳
 _reload_check_interval: float = 5.0  # 检查间隔（秒）
+_config_base_path: Path | None = None  # 记录配置的基础路径
 
 
 # ============================================================
@@ -112,9 +113,10 @@ def _load_config_unlocked(path: Path | None = None) -> None:
     真正的加载逻辑（假设调用方已持有写锁）。
     这个函数不会获取任何锁 — 调用者必须保证写锁被持有。
     """
-    global _cfg, _config_path_keys, _file_cache
+    global _cfg, _config_path_keys, _file_cache, _config_base_path
 
     base = Path.cwd() / "config" if path is None else Path(path)
+    _config_base_path = base  # 保存配置路径
     
     try:
         config_paths = _scan_yaml_files(base)
@@ -195,7 +197,7 @@ def _reload_if_needed() -> bool:
 
     _rw_lock.acquire_write()
     try:
-        _load_config_unlocked()
+        _load_config_unlocked(_config_base_path)
         _last_reload_time = time.time()  # 更新最后检查时间
         logger.info("配置已重新加载")
     finally:
@@ -225,11 +227,11 @@ PathT = t.Union[t.Hashable, t.List[t.Hashable]]
 
 
 @t.overload
-def get_config[T](path: PathT, default: T) -> T: ...
+def get_config(path: PathT, default: t.TypeVar("T")) -> t.TypeVar("T"): ...
 
 
 @t.overload
-def get_config[T](path: PathT, default: None = None) -> T | None: ...
+def get_config(path: PathT, default: None = None) -> t.Any: ...
 
 
 @t.overload
