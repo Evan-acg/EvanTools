@@ -157,7 +157,13 @@ def _load_config_unlocked(path: Path | None = None) -> None:
 
 def _reload_if_needed() -> bool:
     """检查文件是否变化，如需重新加载则执行加载（返回是否重载）。"""
-    global _cfg
+    global _cfg, _last_reload_time
+
+    current_time = time.time()
+    
+    # 检查是否在时间窗口内，如果是则跳过检查
+    if current_time - _last_reload_time < _reload_check_interval:
+        return False
 
     _rw_lock.acquire_read()
     try:
@@ -166,12 +172,19 @@ def _reload_if_needed() -> bool:
         else:
             need_reload = False
             for path in _config_path_keys:
-                if not path.exists():
-                    need_reload = True
-                    break
-                mtime = path.stat().st_mtime
-                cached = _file_cache.get(path)
-                if not cached or cached["mtime"] != mtime:
+                try:
+                    if not path.exists():
+                        need_reload = True
+                        logger.debug(f"配置文件已删除: {path}")
+                        break
+                    mtime = path.stat().st_mtime
+                    cached = _file_cache.get(path)
+                    if not cached or cached["mtime"] != mtime:
+                        need_reload = True
+                        logger.debug(f"配置文件已修改: {path}")
+                        break
+                except OSError as e:
+                    logger.warning(f"检查文件变化失败 {path}: {e}")
                     need_reload = True
                     break
     finally:
@@ -183,6 +196,8 @@ def _reload_if_needed() -> bool:
     _rw_lock.acquire_write()
     try:
         _load_config_unlocked()
+        _last_reload_time = time.time()  # 更新最后检查时间
+        logger.info("配置已重新加载")
     finally:
         _rw_lock.release_write()
 
