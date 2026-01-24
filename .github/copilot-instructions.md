@@ -14,7 +14,7 @@
 
 在本项目中进行 Python 包管理或运行脚本时，必须遵循以下优先级：
 
-1. 如果存在 `pyproject.toml` 文件，则使用其中指定的包管理工具（如 uv 或 Poetry）进行包管理和脚本运行。
+1. 如果存在 `pyproject.toml` 文件，则使用其中指定的包管理工具uv进行包管理和脚本运行。
 2. 如果不存在 `pyproject.toml` 文件，但存在 `requirements.txt` 文件，则使用 `pip` 和 `requirements.txt` 进行包管理和脚本运行。
 3. 如果既不存在 `pyproject.toml` 文件，也不存在 `requirements.txt` 文件，则使用 `setup.py` 进行包管理和脚本运行。---
 
