@@ -11,7 +11,7 @@ from .merger import ConfigMerger
 from .reload_controller import ReloadController
 from .source import ConfigSource
 from ..concurrency.rw_lock import RWLock
-from ..sources.yaml_source import YamlConfigSource
+from ..sources.directory_source import DirectoryConfigSource
 
 logger = logging.getLogger(__name__)
 
@@ -45,14 +45,14 @@ class ConfigManager:
         """Initialize configuration manager.
 
         Args:
-            source: Configuration source. Defaults to YamlConfigSource.
+            source: Configuration source. Defaults to DirectoryConfigSource.
             cache: Configuration cache. Defaults to new ConfigCache.
             reload_controller: Reload controller. Defaults to new ReloadController.
             merger: Configuration merger. Defaults to ConfigMerger.
             lock: Read-write lock. Defaults to new RWLock.
             reload_interval_seconds: Minimum seconds between reload checks.
         """
-        self._source = source or YamlConfigSource()
+        self._source = source or DirectoryConfigSource()
         self._cache = cache or ConfigCache(reload_interval_seconds)
         self._reload_controller = reload_controller or ReloadController()
         self._merger = merger or ConfigMerger()

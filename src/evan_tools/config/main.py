@@ -38,10 +38,11 @@ def load_config(path: Path | None = None) -> None:
     
     Args:
         path: Path to the configuration file or directory. If None, defaults to "config".
-            If a directory is provided, loads "config.yaml" or "config.yml" from that directory.
+            If a directory is provided, scans and merges all YAML files in it.
+            If a file is provided, loads just that file.
     
     Raises:
-        FileNotFoundError: If the configuration file doesn't exist.
+        FileNotFoundError: If the configuration file/directory doesn't exist.
         ValueError: If the file format is not supported.
     """
     if path is None:
@@ -49,23 +50,38 @@ def load_config(path: Path | None = None) -> None:
     else:
         path = Path(path)
     
-    # If path is a directory, look for config.yaml/config.yml inside it
+    # If path is a directory, just use it directly
+    # DirectoryConfigSource will handle scanning
     if path.is_dir():
-        if (path / "config.yaml").exists():
-            path = path / "config.yaml"
-        elif (path / "config.yml").exists():
-            path = path / "config.yml"
-        else:
-            # Create config.yaml as default
-            path = path / "config.yaml"
+        logger.info(f"Loading configuration from directory: {path}")
+        try:
+            _get_manager().load(path)
+            logger.info("Configuration loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load configuration: {e}")
+            raise
+        return
     
-    # Ensure path has extension
+    # If path doesn't have extension and isn't a directory, try to find config.yaml/yml
     if not path.suffix:
-        if path.with_suffix(".yaml").exists():
-            path = path.with_suffix(".yaml")
-        elif path.with_suffix(".yml").exists():
-            path = path.with_suffix(".yml")
+        if (path.parent / f"{path.name}.yaml").exists():
+            path = path.parent / f"{path.name}.yaml"
+        elif (path.parent / f"{path.name}.yml").exists():
+            path = path.parent / f"{path.name}.yml"
         else:
+            # Try the directory approach for "config" without extension
+            if path.name == "config":
+                path = path.parent / "config"
+                if path.is_dir():
+                    logger.info(f"Loading configuration from directory: {path}")
+                    try:
+                        _get_manager().load(path)
+                        logger.info("Configuration loaded successfully")
+                    except Exception as e:
+                        logger.error(f"Failed to load configuration: {e}")
+                        raise
+                    return
+            # Default to yaml extension
             path = path.with_suffix(".yaml")
     
     logger.info(f"Loading configuration from: {path}")
