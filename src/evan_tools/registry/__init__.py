@@ -1,3 +1,8 @@
+"""命令注册表的公开接口。
+
+对外导出注册、加载与 Typer 集成工具。
+"""
+
 from .main import (
     get_registry,
     load_commands,

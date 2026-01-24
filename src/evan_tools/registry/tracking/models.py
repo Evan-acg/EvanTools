@@ -1,4 +1,7 @@
-"""追踪层数据模型"""
+"""追踪层数据模型。
+
+定义命令执行审计与性能统计结构，便于存储和汇总。
+"""
 
 import typing as t
 from dataclasses import dataclass
@@ -7,7 +10,7 @@ from datetime import datetime
 
 @dataclass
 class ExecutionRecord:
-    """命令执行审计记录"""
+    """命令执行审计记录，用于追踪调用历史。"""
     command_name: str
     group: str | None
     timestamp: datetime
@@ -20,7 +23,7 @@ class ExecutionRecord:
 
 @dataclass
 class PerformanceStats:
-    """命令性能统计"""
+    """命令性能统计，记录次数与耗时分布。"""
     command_name: str
     call_count: int
     total_duration_ms: float

@@ -1,4 +1,4 @@
-"""命令索引"""
+"""命令索引与检索。"""
 
 import typing as t
 from .metadata import CommandMetadata
@@ -7,26 +7,26 @@ from ..main import get_registry
 
 
 class CommandIndex:
-    """构建和查询命令索引"""
+    """构建与查询命令元数据索引。"""
     
     def __init__(self) -> None:
-        """初始化索引"""
+        """初始化索引与检查器。"""
         self._inspector = CommandInspector()
         self._metadata_cache: list[CommandMetadata] | None = None
     
     def get_all_commands(self) -> list[CommandMetadata]:
-        """获取所有已注册的命令"""
+        """获取已注册的全部命令元数据列表。"""
         if self._metadata_cache is None:
             self._rebuild_cache()
         return list(self._metadata_cache or [])
     
     def get_commands_by_group(self, group: str) -> list[CommandMetadata]:
-        """按组名获取命令"""
+        """按分组名称筛选命令。"""
         all_commands = self.get_all_commands()
         return [cmd for cmd in all_commands if cmd.group == group]
     
     def get_command_tree(self) -> dict[str | None, list[str]]:
-        """获取命令树结构（按组组织）"""
+        """按分组组织的命令树结构。"""
         tree: dict[str | None, list[str]] = {}
         for cmd in self.get_all_commands():
             group = cmd.group or "_ungrouped"
@@ -36,7 +36,7 @@ class CommandIndex:
         return tree
     
     def search_commands(self, query: str) -> list[CommandMetadata]:
-        """搜索命令（按名称或文档）"""
+        """按名称或文档关键字模糊搜索命令。"""
         query_lower = query.lower()
         all_commands = self.get_all_commands()
         results = []
@@ -50,7 +50,7 @@ class CommandIndex:
         return results
     
     def get_command_docs(self) -> str:
-        """生成命令文档（Markdown 格式）"""
+        """生成 Markdown 格式的命令文档。"""
         lines = ["# 命令列表\n"]
         
         tree = self.get_command_tree()
@@ -71,7 +71,7 @@ class CommandIndex:
         return "".join(lines)
     
     def _rebuild_cache(self) -> None:
-        """重建元数据缓存"""
+        """重建命令元数据缓存。"""
         self._metadata_cache = []
         registry = get_registry()
         
