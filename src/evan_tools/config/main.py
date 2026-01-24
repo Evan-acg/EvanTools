@@ -13,6 +13,9 @@ from .core.manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
+# Type variable for overload signatures
+T = t.TypeVar("T")
+
 # Global ConfigManager instance for backward compatibility
 _manager: ConfigManager | None = None
 
@@ -98,7 +101,7 @@ PathT = t.Union[t.Hashable, t.List[t.Hashable]]
 
 
 @t.overload
-def get_config(path: PathT, default: t.TypeVar("T")) -> t.TypeVar("T"): ...
+def get_config(path: PathT, default: T) -> T: ...
 
 
 @t.overload

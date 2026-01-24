@@ -1,4 +1,4 @@
-"""Module README: 配置管理系统 (Configuration Management System)
+# 配置管理系统 (Configuration Management System)
 
 ## 概述 (Overview)
 
@@ -6,7 +6,7 @@
 
 ## 架构 (Architecture)
 
-```
+```text
 evan_tools.config/
 ├── main.py                          # 向后兼容的公共 API 适配器
 ├── concurrency/
@@ -28,31 +28,37 @@ evan_tools.config/
 ## 核心组件 (Core Components)
 
 ### RWLock - 并发控制
+
 - 支持多个读者，单个写者
 - 线程安全的配置访问
 - 基于 `threading.Condition`
 
 ### ConfigSource (ABC) - 配置源接口
+
 - 定义读/写/支持检查的抽象接口
 - 支持多种配置格式的扩展
 - 当前实现：`YamlConfigSource`、`DirectoryConfigSource`
 
 ### ConfigCache - 缓存管理
+
 - 时间窗口缓存 (默认 5 秒)
 - 减少频繁的文件系统访问
 - 可配置的刷新间隔
 
 ### ReloadController - 重加载控制
+
 - 跟踪配置文件 mtime (修改时间)
 - 检测文件变化
 - 支持热加载
 
 ### ConfigMerger - 配置合并
+
 - 深度合并多个配置字典
 - 使用 pydash 保证嵌套合并的准确性
 - 保持后面的值覆盖前面的值
 
 ### ConfigManager - 统一管理器
+
 - 协调所有组件的交互
 - 依赖注入设计 (DI)
 - 支持单文件和多文件加载
@@ -139,6 +145,7 @@ config = manager.load("config.json")
 ## 特性 (Features)
 
 ✅ **完全的 SOLID 原则应用**
+
 - 单一职责：每个类只有一个改变的原因
 - 开闭原则：通过 ConfigSource 接口扩展功能
 - Liskov 替换：子类完全替换父类
@@ -146,21 +153,25 @@ config = manager.load("config.json")
 - 依赖倒转：依赖抽象而非具体
 
 ✅ **多文件合并**
+
 - 自动扫描目录中的所有 YAML 文件
 - 按字母顺序合并（确定性）
 - 后面的文件覆盖前面的文件
 
 ✅ **热加载支持**
+
 - 自动检测文件变化
 - 时间窗口缓存避免频繁检查
 - 线程安全的并发访问
 
 ✅ **向后兼容**
+
 - 保持原有 API：load_config, get_config, sync_config
 - 支持列表、字符串、Hashable 多种路径格式
 - 现有代码无需修改
 
 ✅ **易于测试**
+
 - 依赖注入允许 Mock 任何组件
 - 所有类都针对接口编程
 - 功能完全分离
@@ -273,4 +284,3 @@ Part of EvanTools package.
 
 **更新日期**: 2026-01-24  
 **版本**: 2.0.0 (SOLID 重构)
-"""
