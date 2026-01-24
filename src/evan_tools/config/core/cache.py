@@ -1,64 +1,63 @@
-"""Configuration cache manager with time-windowed reloading."""
+"""配置缓存管理器，支持时间窗口重载。"""
 
 import time
 from typing import Any, Optional
 
 
 class ConfigCache:
-    """Manages configuration cache with time-window based invalidation.
-    
-    This cache stores the last loaded configuration and decides whether
-    a reload is needed based on a time window. It helps avoid excessive
-    file system checks when config is accessed frequently.
-    
-    Attributes:
-        _cache: The cached configuration dict.
-        _last_reload_time: Timestamp of last reload.
-        _reload_interval_seconds: Minimum time between reloads.
+    """使用时间窗口失效管理配置缓存。
+
+    存储最后加载的配置，并根据时间窗口决定是否需要重载。
+    有助于避免在频繁访问配置时进行过多的文件系统检查。
+
+    属性:
+        _cache: 缓存的配置字典。
+        _last_reload_time: 上次重载的时间戳。
+        _reload_interval_seconds: 两次重载之间的最小时间。
     """
-    
+
     def __init__(self, reload_interval_seconds: float = 5.0):
-        """Initialize cache.
-        
-        Args:
-            reload_interval_seconds: Minimum seconds between reload checks.
-                Defaults to 5.0 seconds.
+        """初始化缓存。
+
+        参数:
+            reload_interval_seconds: 两次重载检查之间的最小秒数。
+                默认为 5.0 秒。
         """
         self._cache: Optional[dict[str, Any]] = None
         self._last_reload_time: float = 0.0
         self._reload_interval_seconds = reload_interval_seconds
-    
+
     def get(self) -> Optional[dict[str, Any]]:
-        """Get cached configuration.
-        
-        Returns:
-            The cached config dict, or None if not loaded yet.
+        """获取缓存的配置。
+
+        返回:
+            缓存的配置字典，如果尚未加载则返回 None。
         """
         return self._cache
-    
+
     def set(self, config: dict[str, Any]) -> None:
-        """Update cache with new configuration.
-        
-        Args:
-            config: The configuration dict to cache.
+        """使用新配置更新缓存。
+
+        参数:
+            config: 要缓存的配置字典。
         """
         self._cache = config
         self._last_reload_time = time.time()
-    
+
     def should_reload(self) -> bool:
-        """Check if enough time has passed to consider a reload.
-        
-        Returns:
-            True if reload interval has elapsed since last reload,
-            False otherwise.
+        """检查是否足够的时间已过，可以考虑重载。
+
+        返回:
+            如果自上次重载以来已过重载间隔，返回 True。
+            否则返回 False。
         """
         if self._cache is None:
             return True
-        
+
         elapsed = time.time() - self._last_reload_time
         return elapsed >= self._reload_interval_seconds
-    
+
     def clear(self) -> None:
-        """Clear the cache."""
+        """清除缓存。"""
         self._cache = None
         self._last_reload_time = 0.0

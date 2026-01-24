@@ -13,6 +13,7 @@
 ## Task 1: 创建模块结构和并发控制模块
 
 **Files:**
+
 - Create: `src/evan_tools/config/core/__init__.py`
 - Create: `src/evan_tools/config/core/source.py` (ConfigSource 接口)
 - Create: `src/evan_tools/config/concurrency/__init__.py`
@@ -22,6 +23,7 @@
 **Step 1: 创建核心目录结构**
 
 创建空的 `__init__.py` 文件：
+
 ```bash
 mkdir -p src/evan_tools/config/core
 mkdir -p src/evan_tools/config/sources
@@ -162,6 +164,7 @@ git commit -m "refactor: create module structure and abstraction interfaces"
 ## Task 2: 创建缓存和重加载控制模块
 
 **Files:**
+
 - Create: `src/evan_tools/config/core/cache.py`
 - Create: `src/evan_tools/config/core/reload.py`
 - Create: `tests/config/test_cache.py`
@@ -436,6 +439,7 @@ git commit -m "feat: add cache and reload controller modules"
 ## Task 3: 创建配置合并和 YAML 配置源
 
 **Files:**
+
 - Create: `src/evan_tools/config/core/merger.py`
 - Create: `src/evan_tools/config/sources/yaml_source.py`
 - Create: `tests/config/test_sources.py`
@@ -693,6 +697,7 @@ git commit -m "feat: add merger and yaml config source"
 ## Task 4: 创建 ConfigManager 和集成测试
 
 **Files:**
+
 - Create: `src/evan_tools/config/manager.py`
 - Create: `tests/config/test_manager.py`
 
@@ -1041,6 +1046,7 @@ git commit -m "feat: add config manager with unified interface"
 ## Task 5: 更新主模块并保持向后兼容性
 
 **Files:**
+
 - Modify: `src/evan_tools/config/__init__.py`
 - Modify: `src/evan_tools/config/main.py`
 
@@ -1154,6 +1160,7 @@ git commit -m "refactor: convert main.py to adapter layer for backward compatibi
 ## Task 6: 文档和清理
 
 **Files:**
+
 - Create: `src/evan_tools/config/README.md`
 
 **Step 1: 创建模块文档**
@@ -1168,6 +1175,7 @@ File: `src/evan_tools/config/README.md`
 ## 架构
 
 ```
+
 ConfigManager
 ├── ConfigSource (抽象)
 │   └── YamlConfigSource (实现)
@@ -1175,6 +1183,7 @@ ConfigManager
 ├── ReloadController (热加载)
 ├── ConfigMerger (合并)
 └── RWLock (并发控制)
+
 ```
 
 ## 使用
@@ -1258,6 +1267,7 @@ manager.load()
 | `ConfigManager` | 统一管理接口 |
 | `YamlConfigSource` | YAML 格式实现 |
 | `RWLock` | 读写锁并发控制 |
+
 ```
 
 **Step 2: 运行全部测试**
@@ -1279,7 +1289,8 @@ git commit -m "docs: add comprehensive config system documentation"
 
 **Step 1: 验证完整性**
 
-Run: 
+Run:
+
 ```bash
 python -c "from evan_tools.config import load_config, get_config, sync_config, ConfigManager; print('All imports successful')"
 pytest tests/config/ -v
@@ -1292,4 +1303,3 @@ git log --oneline | head -10
 ```
 
 Expected: 查看最后 10 个提交，应该都是重构相关的
-

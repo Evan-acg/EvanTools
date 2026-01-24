@@ -1,4 +1,4 @@
-"""Unified configuration manager coordinating all components."""
+"""统一的配置管理器，协调所有组件。"""
 
 import logging
 from pathlib import Path
@@ -17,20 +17,20 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigManager:
-    """Thread-safe configuration manager with hot-reload support.
+    """线程安全的配置管理器，支持热重载。
 
-    Coordinates configuration loading, caching, merging, and hot-reload
-    using dependency injection. All components are replaceable for testing.
+    使用依赖注入协调配置加载、缓存、合并和热重载。
+    所有组件都可替换用于测试。
 
-    Attributes:
-        _source: Configuration source for reading/writing files.
-        _cache: Configuration cache with time-window invalidation.
-        _reload_controller: Tracks file modifications for hot-reload.
-        _merger: Merges multiple configuration dictionaries.
-        _lock: Read-write lock for thread-safe access.
-        _config_path: Path to the primary configuration file.
-        _base_path: Base directory for resolving relative paths.
-        _default_config: Default configuration merged with loaded config.
+    属性:
+        _source: 用于读写文件的配置源。
+        _cache: 具有时间窗口失效的配置缓存。
+        _reload_controller: 追踪文件修改以实现热重载。
+        _merger: 合并多个配置字典。
+        _lock: 读写锁用于线程安全访问。
+        _config_path: 主配置文件的路径。
+        _base_path: 用于解析相对路径的基目录。
+        _default_config: 与加载的配置合并的默认配置。
     """
 
     def __init__(
@@ -42,15 +42,15 @@ class ConfigManager:
         lock: Optional[RWLock] = None,
         reload_interval_seconds: float = 5.0,
     ):
-        """Initialize configuration manager.
+        """初始化配置管理器。
 
-        Args:
-            source: Configuration source. Defaults to DirectoryConfigSource.
-            cache: Configuration cache. Defaults to new ConfigCache.
-            reload_controller: Reload controller. Defaults to new ReloadController.
-            merger: Configuration merger. Defaults to ConfigMerger.
-            lock: Read-write lock. Defaults to new RWLock.
-            reload_interval_seconds: Minimum seconds between reload checks.
+        参数:
+            source: 配置源。默认为 DirectoryConfigSource。
+            cache: 配置缓存。默认为新的 ConfigCache。
+            reload_controller: 重载控制器。默认为新的 ReloadController。
+            merger: 配置合并器。默认为 ConfigMerger。
+            lock: 读写锁。默认为新的 RWLock。
+            reload_interval_seconds: 重载检查的最小间隔秒数。
         """
         self._source = source or DirectoryConfigSource()
         self._cache = cache or ConfigCache(reload_interval_seconds)
@@ -68,24 +68,24 @@ class ConfigManager:
         base_path: Optional[str | Path] = None,
         default_config: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
-        """Load configuration from file.
+        """从文件加载配置。
 
-        Loads the configuration file and merges it with the default config.
-        Sets up hot-reload tracking for this configuration file.
+        加载配置文件并将其与默认配置合并。
+        为此配置文件设置热重载跟踪。
 
-        Args:
-            config_path: Path to the configuration file.
-            base_path: Base directory for resolving relative paths.
-                If None, uses config_path's parent directory.
-            default_config: Default configuration to merge with loaded config.
-                Later values (from file) override defaults.
+        参数:
+            config_path: 配置文件的路径。
+            base_path: 用于解析相对路径的基目录。
+                如果为 None，使用 config_path 的父目录。
+            default_config: 与加载的配置合并的默认配置。
+                后来的值（来自文件）覆盖默认值。
 
-        Returns:
-            The loaded and merged configuration dictionary.
+        返回:
+            加载并合并的配置字典。
 
-        Raises:
-            FileNotFoundError: If the configuration file doesn't exist.
-            ValueError: If the file format is not supported by the source.
+        抛出:
+            FileNotFoundError: 如果配置文件不存在。
+            ValueError: 如果源不支持该文件格式。
         """
         config_path = Path(config_path)
 
@@ -99,25 +99,20 @@ class ConfigManager:
 
         self._lock.acquire_write()
         try:
-            # Load from source
             loaded_config = self._source.read(config_path, base_path)
 
-            # Merge with defaults
             if default_config:
                 final_config = self._merger.merge(default_config, loaded_config)
             else:
                 final_config = loaded_config
 
-            # Update cache
             self._cache.set(final_config)
 
-            # Track for hot-reload
             resolved_path = (
                 config_path if config_path.is_absolute() else base_path / config_path
             )
             self._reload_controller.set_config_path(resolved_path.resolve())
 
-            # Store for reload
             self._config_path = config_path
             self._base_path = base_path
             self._default_config = default_config or {}
@@ -129,20 +124,20 @@ class ConfigManager:
             self._lock.release_write()
 
     def get(self, query: Optional[str] = None, default: Any = None) -> Any:
-        """Get configuration value with hot-reload support.
+        """获取配置值，支持热重载。
 
-        Automatically reloads configuration if the file has changed and
-        the reload interval has elapsed. Uses pydash for nested queries.
+        如果文件已更改且重载间隔已过，则自动重载配置。
+        使用 pydash 进行嵌套查询。
 
-        Args:
-            query: Dot-notation path to configuration value (e.g., "db.host").
-                If None, returns the entire configuration.
-            default: Default value if query doesn't match anything.
+        参数:
+            query: 配置值的点号标记路径（例如 "db.host"）。
+                如果为 None，返回整个配置。
+            default: 如果查询不匹配任何内容时的默认值。
 
-        Returns:
-            The configuration value, or default if not found.
+        返回:
+            配置值，或如果未找到则返回默认值。
 
-        Example:
+        示例:
             >>> manager.load("config.yaml")
             >>> manager.get("database.host")
             'localhost'
@@ -166,18 +161,18 @@ class ConfigManager:
             self._lock.release_read()
 
     def set(self, query: str, value: Any) -> None:
-        """Set a configuration value and optionally sync to file.
+        """设置配置值，可选择同步到文件。
 
-        Updates the in-memory configuration using pydash.set_.
-        Does NOT automatically write to file - call sync() to persist.
+        使用 pydash.set_ 更新内存中的配置。
+        不会自动写入文件 - 调用 sync() 来持久化。
 
-        Args:
-            query: Dot-notation path to set (e.g., "db.host").
-            value: The value to set.
+        参数:
+            query: 要设置的点号标记路径（例如 "db.host"）。
+            value: 要设置的值。
 
-        Example:
+        示例:
             >>> manager.set("database.host", "prod.example.com")
-            >>> manager.sync()  # Persist to file
+            >>> manager.sync()
         """
         self._lock.acquire_write()
         try:
@@ -192,13 +187,13 @@ class ConfigManager:
             self._lock.release_write()
 
     def sync(self) -> None:
-        """Write the current configuration back to file.
+        """将当前配置写回文件。
 
-        Persists the in-memory configuration to the original config file.
-        Requires that load() has been called first.
+        将内存中的配置持久化到原始配置文件。
+        需要先调用 load() 才能使用。
 
-        Raises:
-            RuntimeError: If no configuration has been loaded yet.
+        抛出:
+            RuntimeError: 如果尚未加载配置。
         """
         if self._config_path is None:
             raise RuntimeError("No configuration loaded. Call load() before sync().")
@@ -209,9 +204,6 @@ class ConfigManager:
             if config is None:
                 raise RuntimeError("No configuration in cache.")
 
-            # Extract the non-default parts for writing
-            # (We don't want to write defaults back to the file)
-            # For now, just write the whole config
             self._source.write(self._config_path, config, self._base_path)
 
             logger.info(f"Configuration synced to {self._config_path}")
@@ -220,16 +212,16 @@ class ConfigManager:
             self._lock.release_read()
 
     def reload(self) -> dict[str, Any]:
-        """Force immediate reload of configuration from file.
+        """强制立即从文件重载配置。
 
-        Bypasses cache and reload interval checks. Useful for testing
-        or when you know the config file has changed.
+        绕过缓存和重载间隔检查。用于测试或
+        当已知配置文件已更改时使用。
 
-        Returns:
-            The reloaded configuration dictionary.
+        返回:
+            重载的配置字典。
 
-        Raises:
-            RuntimeError: If no configuration has been loaded yet.
+        抛出:
+            RuntimeError: 如果尚未加载配置。
         """
         if self._config_path is None:
             raise RuntimeError("No configuration loaded. Call load() before reload().")
@@ -237,14 +229,14 @@ class ConfigManager:
         return self.load(self._config_path, self._base_path, self._default_config)
 
     def _reload_if_needed(self) -> None:
-        """Check if reload is needed and perform it if so.
+        """检查是否需要重载并在必要时执行。
 
-        Reload happens if:
-        1. Cache indicates reload interval has elapsed
-        2. ReloadController detects file modification
+        重载发生在以下情况：
+        1. 缓存表示重载间隔已过
+        2. ReloadController 检测到文件修改
         """
         if not self._cache.should_reload():
-            return  # Not time yet
+            return
 
         if self._reload_controller.has_file_changed():
             logger.info("Configuration file changed, reloading...")

@@ -1,4 +1,4 @@
-"""Directory-based configuration source with multi-file scanning."""
+"""基于目录的配置源，支持多文件扫描。"""
 
 import logging
 from pathlib import Path
@@ -10,110 +10,105 @@ logger = logging.getLogger(__name__)
 
 
 class DirectoryConfigSource(YamlConfigSource):
-    """Configuration source that scans and merges multiple YAML files from a directory.
-    
-    Extends YamlConfigSource to support loading all YAML files from a directory,
-    merging them in sorted order (deterministic priority).
+    """扫描并合并来自目录的多个 YAML 文件的配置源。
+
+    扩展 YamlConfigSource 以支持从目录加载所有 YAML 文件，
+    按排序顺序（确定的优先级）合并它们。
     """
-    
+
     def read(self, path: Path, base_path: Optional[Path] = None) -> dict[str, Any]:
-        """Read and merge all YAML files from a directory.
-        
-        If path is a directory, scans for all .yaml/.yml files and merges them.
-        If path is a file, delegates to parent YamlConfigSource.read().
-        
-        Args:
-            path: Path to directory or YAML file.
-            base_path: Optional base directory for resolving relative paths.
-        
-        Returns:
-            The merged configuration as a dictionary.
-        
-        Raises:
-            FileNotFoundError: If the path doesn't exist.
-            yaml.YAMLError: If any file is not valid YAML.
+        """读取并合并目录中的所有 YAML 文件。
+
+        如果路径是目录，扫描所有 .yaml/.yml 文件并合并它们。
+        如果路径是文件，委托给父类 YamlConfigSource.read()。
+
+        参数:
+            path: 目录或 YAML 文件的路径。
+            base_path: 用于解析相对路径的可选基目录。
+
+        返回:
+            合并的配置字典。
+
+        抛出:
+            FileNotFoundError: 如果路径不存在。
+            yaml.YAMLError: 如果任何文件不是有效的 YAML。
         """
         resolved_path = self._resolve_path(path, base_path)
-        
+
         if not resolved_path.exists():
             raise FileNotFoundError(f"Configuration path not found: {resolved_path}")
-        
-        # If it's a file, use parent implementation
+
         if resolved_path.is_file():
             return super().read(path, base_path)
-        
-        # It's a directory - scan for all YAML files
+
         return self._read_directory(resolved_path)
-    
+
     def _read_directory(self, directory: Path) -> dict[str, Any]:
-        """Read and merge all YAML files from a directory.
-        
-        Args:
-            directory: The directory path.
-        
-        Returns:
-            Merged configuration from all YAML files.
+        """读取并合并目录中的所有 YAML 文件。
+
+        参数:
+            directory: 目录路径。
+
+        返回:
+            来自所有 YAML 文件的合并配置。
         """
         yaml_files = sorted(
             list(directory.glob("*.yaml")) + list(directory.glob("*.yml"))
         )
-        
+
         if not yaml_files:
             logger.warning(f"No YAML files found in {directory}")
             return {}
-        
+
         merged_config: dict[str, Any] = {}
-        
+
         for yaml_file in yaml_files:
             try:
                 file_config = super().read(yaml_file)
-                # Deep merge the file config
                 from ..core.merger import ConfigMerger
                 merged_config = ConfigMerger.merge(merged_config, file_config)
                 logger.debug(f"Loaded and merged {yaml_file.name}")
             except Exception as e:
                 logger.error(f"Failed to load {yaml_file}: {e}")
-                # Continue with next file on error
                 continue
-        
+
         logger.info(f"Loaded and merged {len(yaml_files)} YAML files from {directory}")
         return merged_config
-    
+
     def supports(self, path: Path) -> bool:
-        """Check if this source supports the given path.
-        
-        Supports both directories and YAML files.
-        
-        Args:
-            path: Path to check.
-        
-        Returns:
-            True if path is a directory or has .yaml/.yml extension.
+        """检查此源是否支持给定路径。
+
+        支持目录和 YAML 文件。
+
+        参数:
+            path: 要检查的路径。
+
+        返回:
+            如果路径是目录或具有 .yaml/.yml 扩展名，返回 True。
         """
         return path.is_dir() or path.suffix.lower() in {'.yaml', '.yml'}
-    
-    def write(self, path: Path, config: dict[str, Any], 
+
+    def write(self, path: Path, config: dict[str, Any],
               base_path: Optional[Path] = None) -> None:
-        """Write configuration to a YAML file.
-        
-        For directories, this is not supported. Use a file path instead.
-        For files, delegates to parent YamlConfigSource.write().
-        
-        Args:
-            path: Path to directory or YAML file.
-            config: Configuration dictionary to write.
-            base_path: Optional base directory for resolving relative paths.
-        
-        Raises:
-            ValueError: If path is a directory.
+        """将配置写入 YAML 文件。
+
+        对于目录，不支持此操作。改用文件路径。
+        对于文件，委托给父类 YamlConfigSource.write()。
+
+        参数:
+            path: 目录或 YAML 文件的路径。
+            config: 要写入的配置字典。
+            base_path: 用于解析相对路径的可选基目录。
+
+        抛出:
+            ValueError: 如果路径是目录。
         """
         resolved_path = self._resolve_path(path, base_path)
-        
+
         if resolved_path.is_dir():
             raise ValueError(
                 f"Cannot write to directory {resolved_path}. "
                 "Use a specific YAML file path instead."
             )
-        
-        # Delegate to parent implementation for file writing
+
         super().write(path, config, base_path)
