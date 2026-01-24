@@ -1,6 +1,6 @@
 [project]
 name = "evan-tools"
-version = "0.3.3"
+version = "0.3.8"
 description = "It's a set of tools for Evan's development."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,7 +33,3 @@ dev = ["pytest>=9.0.2", "pytest-mock>=3.15.1"]
 [tool.pytest.ini_options]
 addopts = "-vs"
 testpaths = ["tests"]
-
-[tool.uv]
-# 使用官方 PyPI 作为索引，避免第三方镜像 404 问题
-index-url = "https://pypi.org/simple"
