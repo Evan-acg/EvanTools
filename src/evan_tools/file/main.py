@@ -1,4 +1,5 @@
 import os
+import sys
 import typing as t
 from pathlib import Path
 from enum import Enum
@@ -57,6 +58,226 @@ class GatherConfig:
     error_handler: t.Callable[[Path, Exception], None] | None = None
 
 
+@dataclass(frozen=True)
+class FilterRules:
+    patterns: tuple[str, ...] = ()
+    excludes: tuple[str, ...] = ()
+    size_min: int | None = None
+    size_max: int | None = None
+    mtime_after: float | None = None
+    mtime_before: float | None = None
+    custom: t.Callable[[Path], bool] | None = None
+
+
+@dataclass(frozen=True)
+class TraversalOptions:
+    max_depth: int
+    recursive: bool
+    dir_only: bool
+    sort_by: SortBy | None = None
+    sort_reverse: bool = False
+    progress_callback: t.Callable[[int], None] | None = None
+    error_handler: t.Callable[[Path, Exception], None] | None = None
+
+
+def _make_sort_key(sort_by: SortBy | None) -> t.Callable[[Path], t.Any]:
+    def _sort_key(path: Path) -> t.Any:
+        try:
+            if sort_by == SortBy.NAME:
+                return path.name.lower()
+            if sort_by == SortBy.EXTENSION:
+                return path.suffix.lower()
+
+            stat = path.stat()
+            if sort_by == SortBy.SIZE:
+                return stat.st_size
+            if sort_by == SortBy.MTIME:
+                return stat.st_mtime
+            if sort_by == SortBy.CTIME:
+                return stat.st_ctime
+        except OSError:
+            return 0
+
+        return 0
+
+    return _sort_key
+
+
+class PathFilter:
+    def __init__(self, rules: FilterRules, *, dir_only: bool) -> None:
+        self._rules = rules
+        self._dir_only = dir_only
+
+    @property
+    def rules(self) -> FilterRules:
+        return self._rules
+
+    def __call__(self, path: Path) -> bool:
+        name = path.name
+
+        if self._rules.patterns and not any(
+            fnmatch.fnmatch(name, pat) for pat in self._rules.patterns
+        ):
+            return False
+
+        if self._rules.excludes and any(
+            fnmatch.fnmatch(name, pat) for pat in self._rules.excludes
+        ):
+            return False
+
+        if path.is_file() and not self._dir_only:
+            try:
+                stat = path.stat()
+            except OSError:
+                return False
+
+            if self._rules.size_min is not None and stat.st_size < self._rules.size_min:
+                return False
+            if self._rules.size_max is not None and stat.st_size > self._rules.size_max:
+                return False
+            if (
+                self._rules.mtime_after is not None
+                and stat.st_mtime < self._rules.mtime_after
+            ):
+                return False
+            if (
+                self._rules.mtime_before is not None
+                and stat.st_mtime > self._rules.mtime_before
+            ):
+                return False
+
+        if self._rules.custom and not self._rules.custom(path):
+            return False
+
+        return True
+
+
+class PathCollector:
+    def __init__(
+        self,
+        options: TraversalOptions,
+        path_filter: PathFilter,
+        errors: list[tuple[Path, Exception]] | None = None,
+    ) -> None:
+        self._options = options
+        self._filter = path_filter
+        self._errors = errors if errors is not None else []
+
+    @property
+    def errors(self) -> list[tuple[Path, Exception]]:
+        return self._errors
+
+    def collect(self, paths: t.Iterable[Path | str]) -> t.Iterable[Path]:
+        count = 0
+
+        for raw_path in paths:
+            path = Path(raw_path)
+
+            if not path.exists():
+                self._handle_error(path, FileNotFoundError(path))
+                continue
+
+            try:
+                if path.is_file():
+                    if not self._options.dir_only and self._filter(path):
+                        count += 1
+                        self._notify_progress(count)
+                        yield path
+                    continue
+
+                if not path.is_dir():
+                    continue
+
+                if self._options.recursive:
+                    count = yield from self._yield_recursive(path, count)
+                else:
+                    count = yield from self._yield_flat(path, count)
+            except OSError as exc:
+                self._handle_error(path, exc)
+
+    def _notify_progress(self, count: int) -> None:
+        if self._options.progress_callback:
+            self._options.progress_callback(count)
+
+    def _handle_error(self, path: Path, error: Exception) -> None:
+        self._errors.append((path, error))
+        if self._options.error_handler:
+            self._options.error_handler(path, error)
+
+    def _yield_flat(self, path: Path, count: int) -> t.Generator[Path, None, int]:
+        try:
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    entry_path = Path(entry.path)
+                    try:
+                        if self._options.dir_only:
+                            is_target = entry.is_dir(follow_symlinks=False)
+                        else:
+                            is_target = entry.is_file(follow_symlinks=False)
+
+                        if is_target and self._filter(entry_path):
+                            count += 1
+                            self._notify_progress(count)
+                            yield entry_path
+                    except OSError as exc:
+                        self._handle_error(entry_path, exc)
+        except OSError as exc:
+            self._handle_error(path, exc)
+
+        return count
+
+    def _should_descend(self, dir_name: str) -> bool:
+        if not self._filter.rules.excludes:
+            return True
+
+        return not any(
+            fnmatch.fnmatch(dir_name, pat) for pat in self._filter.rules.excludes
+        )
+
+    def _yield_recursive(
+        self, path: Path, count: int
+    ) -> t.Generator[Path, None, int]:
+        try:
+            for root, dirs, files in os.walk(path):
+                rp = Path(root)
+
+                try:
+                    depth = len(rp.relative_to(path).parts) if rp != path else 0
+                except ValueError:
+                    continue
+
+                # 超过最大深度时跳过当前层
+                if depth > self._options.max_depth:
+                    continue
+
+                # 达到最大深度时，清空dirs防止进一步递归
+                if depth == self._options.max_depth:
+                    dirs.clear()
+
+                if self._filter.rules.excludes:
+                    dirs[:] = [d for d in dirs if self._should_descend(d)]
+
+                items = dirs if self._options.dir_only else files
+
+                for name in items:
+                    item_path = rp / name
+                    item_depth = depth + 1 if self._options.dir_only else depth
+
+                    try:
+                        if item_depth <= self._options.max_depth and self._filter(
+                            item_path
+                        ):
+                            count += 1
+                            self._notify_progress(count)
+                            yield item_path
+                    except OSError as exc:
+                        self._handle_error(item_path, exc)
+        except OSError as exc:
+            self._handle_error(path, exc)
+
+        return count
+
+
 class PathGatherer:
     """路径收集器 - 链式调用构建器
     
@@ -112,6 +333,12 @@ class PathGatherer:
         self._config.excludes.extend(patterns)
         return self
     
+    def directories_only(self, enable: bool = True) -> "PathGatherer":
+        """仅返回目录而非文件。"""
+
+        self._config.dir_only = enable
+        return self
+
     def sort_by(self, key: SortBy, *, reverse: bool = False) -> "PathGatherer":
         """设置排序方式
         
@@ -154,6 +381,12 @@ class PathGatherer:
         if mtime_before is not None:
             self._config.mtime_before = mtime_before
         return self
+
+    def custom_filter(self, func: t.Callable[[Path], bool]) -> "PathGatherer":
+        """设置自定义过滤函数。"""
+
+        self._config.filter_func = func
+        return self
     
     def on_progress(self, callback: t.Callable[[int], None]) -> "PathGatherer":
         """设置进度回调
@@ -176,223 +409,6 @@ class PathGatherer:
         """
         return self._errors.copy()
     
-    def _should_include(self, path: Path) -> bool:
-        """多层过滤：模式匹配 → 排除规则 → 属性过滤 → 自定义过滤器
-        
-        参数:
-            path: 要检查的路径
-        
-        返回:
-            是否应该包含此路径
-        """
-        name = path.name
-        
-        # 1. 模式匹配（如果指定了）
-        if self._config.patterns:
-            if not any(fnmatch.fnmatch(name, pat) for pat in self._config.patterns):
-                return False
-        
-        # 2. 排除规则
-        if self._config.excludes:
-            if any(fnmatch.fnmatch(name, pat) for pat in self._config.excludes):
-                return False
-        
-        # 3. 文件属性过滤（仅对文件）
-        if path.is_file() and not self._config.dir_only:
-            try:
-                stat = path.stat()
-                
-                if self._config.size_min is not None and stat.st_size < self._config.size_min:
-                    return False
-                if self._config.size_max is not None and stat.st_size > self._config.size_max:
-                    return False
-                if self._config.mtime_after is not None and stat.st_mtime < self._config.mtime_after:
-                    return False
-                if self._config.mtime_before is not None and stat.st_mtime > self._config.mtime_before:
-                    return False
-            except OSError:
-                return False
-        
-        # 4. 自定义过滤器
-        if self._config.filter_func and not self._config.filter_func(path):
-            return False
-        
-        return True
-    
-    def _get_sort_key(self, path: Path):
-        """获取排序键
-        
-        参数:
-            path: 路径对象
-        
-        返回:
-            排序键值
-        """
-        try:
-            if self._config.sort_by == SortBy.NAME:
-                return path.name.lower()
-            elif self._config.sort_by == SortBy.EXTENSION:
-                return path.suffix.lower()
-            
-            stat = path.stat()
-            if self._config.sort_by == SortBy.SIZE:
-                return stat.st_size
-            elif self._config.sort_by == SortBy.MTIME:
-                return stat.st_mtime
-            elif self._config.sort_by == SortBy.CTIME:
-                return stat.st_ctime
-        except OSError:
-            return 0  # 出错时放在最前面
-        
-        return 0
-    
-    def _notify_progress(self, count: int) -> None:
-        """通知进度
-        
-        参数:
-            count: 当前已找到的文件数
-        """
-        if self._config.progress_callback:
-            self._config.progress_callback(count)
-    
-    def _handle_error(self, path: Path, error: Exception) -> None:
-        """处理错误
-        
-        参数:
-            path: 出错的路径
-            error: 异常对象
-        """
-        self._errors.append((path, error))
-        if self._config.error_handler:
-            self._config.error_handler(path, error)
-    
-    def _gather_flat_optimized(self, path: Path) -> t.Generator[Path, None, None]:
-        """平面遍历（非递归）- 使用 scandir 优化性能
-        
-        参数:
-            path: 要遍历的目录路径
-        
-        生成:
-            匹配的路径
-        """
-        try:
-            with os.scandir(path) as entries:
-                for entry in entries:
-                    try:
-                        entry_path = Path(entry.path)
-                        
-                        # 直接使用 entry 的方法，避免额外的 stat 调用
-                        is_target = (
-                            (self._config.dir_only and entry.is_dir(follow_symlinks=False))
-                            or (not self._config.dir_only and entry.is_file(follow_symlinks=False))
-                        )
-                        
-                        if is_target and self._should_include(entry_path):
-                            yield entry_path
-                    except OSError as e:
-                        self._handle_error(entry_path, e)
-        except OSError as e:
-            self._handle_error(path, e)
-    
-    def _gather_recursive_optimized(self, path: Path, max_depth: int) -> t.Generator[Path, None, None]:
-        """递归遍历 - 优化版本
-        
-        参数:
-            path: 要遍历的目录路径
-            max_depth: 最大深度
-        
-        生成:
-            匹配的路径
-        """
-        try:
-            for root, dirs, files in os.walk(path):
-                rp = Path(root)
-                
-                # 深度计算
-                try:
-                    depth = len(rp.relative_to(path).parts) if rp != path else 0
-                except ValueError:
-                    continue
-                
-                # 深度控制
-                if depth >= max_depth:
-                    dirs.clear()
-                if depth > max_depth:
-                    continue
-
-                # 在进入子目录前应用排除规则，避免递归到被排除的目录
-                if self._config.excludes:
-                    dirs[:] = [
-                        d for d in dirs
-                        if not any(fnmatch.fnmatch(d, pat) for pat in self._config.excludes)
-                    ]
-                
-                # 选择要处理的项目
-                items = dirs if self._config.dir_only else files
-                
-                for name in items:
-                    item_path = rp / name
-                    item_depth = depth + 1 if self._config.dir_only else depth
-                    
-                    try:
-                        if item_depth <= max_depth and self._should_include(item_path):
-                            yield item_path
-                    except OSError as e:
-                        self._handle_error(item_path, e)
-        except OSError as e:
-            self._handle_error(path, e)
-    
-    def _collect_paths(self, max_depth: int, recursive: bool) -> t.Generator[Path, None, None]:
-        """内部收集方法，处理遍历和过滤
-        
-        参数:
-            max_depth: 最大深度
-            recursive: 是否递归
-        
-        生成:
-            匹配的路径
-        """
-        count = 0
-        
-        for path in self._paths:
-            path = Path(path)
-            
-            # 处理根路径本身
-            try:
-                if not path.exists():
-                    continue
-
-                if path.is_file():
-                    if not self._config.dir_only and self._should_include(path):
-                        yield path
-                        count += 1
-                        self._notify_progress(count)
-                    continue
-
-                if path.is_dir():
-                    if self._config.dir_only and self._should_include(path):
-                        yield path
-                        count += 1
-                        self._notify_progress(count)
-            except OSError as e:
-                self._handle_error(path, e)
-                continue
-            
-            if not path.is_dir():
-                continue
-            
-            # 遍历子项
-            if not recursive:
-                for item_path in self._gather_flat_optimized(path):
-                    yield item_path
-                    count += 1
-                    self._notify_progress(count)
-            else:
-                for item_path in self._gather_recursive_optimized(path, max_depth):
-                    yield item_path
-                    count += 1
-                    self._notify_progress(count)
-    
     def gather(self) -> t.Iterable[Path]:
         """执行路径收集
         
@@ -400,105 +416,44 @@ class PathGatherer:
             路径迭代器。如果设置了排序，返回列表；否则返回生成器以节省内存。
         """
         max_depth, recursive = _process_depth(self._config.deep)
-        
-        # 第一阶段：收集所有匹配的路径（使用生成器，节省内存）
-        collected = self._collect_paths(max_depth, recursive)
-        
-        # 第二阶段：如果需要排序，必须物化为列表
+        options = TraversalOptions(
+            max_depth=max_depth,
+            recursive=recursive,
+            dir_only=self._config.dir_only,
+            sort_by=self._config.sort_by,
+            sort_reverse=self._config.sort_reverse,
+            progress_callback=self._config.progress_callback,
+            error_handler=self._config.error_handler,
+        )
+        rules = FilterRules(
+            patterns=tuple(self._config.patterns),
+            excludes=tuple(self._config.excludes),
+            size_min=self._config.size_min,
+            size_max=self._config.size_max,
+            mtime_after=self._config.mtime_after,
+            mtime_before=self._config.mtime_before,
+            custom=self._config.filter_func,
+        )
+        path_filter = PathFilter(rules, dir_only=self._config.dir_only)
+        collector = PathCollector(options, path_filter, errors=self._errors)
+        collected = collector.collect(self._paths)
+
         if self._config.sort_by:
+            sort_key = _make_sort_key(self._config.sort_by)
             collected_list = list(collected)
-            collected_list.sort(
-                key=lambda p: self._get_sort_key(p),
-                reverse=self._config.sort_reverse
-            )
+            collected_list.sort(key=sort_key, reverse=self._config.sort_reverse)
             yield from collected_list
         else:
-            # 不排序时保持迭代器特性
             yield from collected
 
 
-# 1. 参数解析 (保持不变)
 def _process_depth(deep: bool | int) -> t.Tuple[int, bool]:
     if deep is False:
         return 1, False
     elif deep is True:
-        return 10**6, True
+        return sys.maxsize, True
     else:
         return deep, True
-
-
-# 2. 根路径处理
-def _handle_root_path(
-    path: Path,
-    dir_only: bool,
-    path_filter: t.Callable[[Path], bool],
-) -> t.Iterable[Path]:
-    if not path.exists():
-        return
-
-    if path.is_file():
-        if not dir_only and path_filter(path):
-            yield path
-    elif path.is_dir():
-        if dir_only and path_filter(path):
-            yield path
-
-
-def _gather_flat(
-    path: Path,
-    dir_only: bool,
-    path_filter: t.Callable[[Path], bool],
-) -> t.Iterable[Path]:
-    try:
-        with os.scandir(path) as entries:
-            for entry in entries:
-                entry_path = Path(entry.path)
-
-                is_target_type = (dir_only and entry.is_dir()) or (
-                    not dir_only and entry.is_file()
-                )
-
-                if is_target_type and path_filter(entry_path):
-                    yield entry_path
-    except OSError:
-        pass
-
-
-def _gather_recursive(
-    path: Path,
-    max_depth: int,
-    dir_only: bool,
-    path_filter: t.Callable[[Path], bool],
-) -> t.Iterable[Path]:
-    try:
-        for root, dirs, files in os.walk(path):
-            rp = Path(root)
-
-            depth = 0
-            if rp != path:
-                try:
-                    depth = len(rp.relative_to(path).parts)
-                except ValueError:
-                    continue
-
-            if depth >= max_depth:
-                dirs.clear()
-
-            if depth > max_depth:
-                continue
-
-            items = dirs if dir_only else files
-
-            for name in items:
-                item_path = rp / name
-
-                item_depth = depth + 1 if dir_only else depth
-
-                if item_depth <= max_depth and path_filter(item_path):
-                    yield item_path
-
-    except OSError:
-        pass
 
 
 def gather_paths(
@@ -526,18 +481,14 @@ def gather_paths(
     返回值：
         t.Iterable[Path]: 满足条件的路径迭代器。
     """
-
-    path_filter = filter or (lambda _: True)
     max_depth, recursive = _process_depth(deep)
+    rules = FilterRules(custom=filter)
+    path_filter = PathFilter(rules, dir_only=dir_only)
+    options = TraversalOptions(
+        max_depth=max_depth,
+        recursive=recursive,
+        dir_only=dir_only,
+    )
+    collector = PathCollector(options, path_filter)
 
-    for path in paths:
-        path = Path(path)
-        yield from _handle_root_path(path, dir_only, path_filter)
-
-        if not path.is_dir():
-            continue
-
-        if not recursive:
-            yield from _gather_flat(path, dir_only, path_filter)
-        else:
-            yield from _gather_recursive(path, max_depth, dir_only, path_filter)
+    yield from collector.collect(paths)
