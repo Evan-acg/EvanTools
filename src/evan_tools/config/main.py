@@ -248,13 +248,14 @@ def get_config(path: PathT | None = None, default: t.Any = None) -> t.Any:
 
 def sync_config() -> None:
     """把 _cfg 写回各 YAML 文件（写锁）"""
-    global _cfg, _file_cache
+    global _cfg, _file_cache, _last_reload_time
 
     _reload_if_needed()
 
     _rw_lock.acquire_write()
     try:
         if _cfg is None:
+            logger.warning("配置为空，无法写入")
             return
 
         for path, keys in _config_path_keys.items():
@@ -265,12 +266,22 @@ def sync_config() -> None:
                 if v is not None:
                     pydash.set_(new_content, key, v)
 
-            with path.open("w", encoding="utf-8") as f:
-                yaml.safe_dump(new_content, f, allow_unicode=True, sort_keys=False)
+            try:
+                with path.open("w", encoding="utf-8") as f:
+                    yaml.safe_dump(new_content, f, allow_unicode=True, sort_keys=False)
+                
+                # 更新缓存 mtime，避免下次立即重加载
+                mtime = path.stat().st_mtime
+                _file_cache[path] = {
+                    "mtime": mtime,
+                    "content": new_content,
+                }
+                logger.info(f"配置已写入 {path}")
+            except OSError as e:
+                logger.error(f"写入配置文件失败 {path}: {e}")
+                raise
 
-            _file_cache[path] = {
-                "mtime": path.stat().st_mtime,
-                "content": new_content,
-            }
+        # 更新最后重加载时间，防止刚写完马上又重加载
+        _last_reload_time = time.time()
     finally:
         _rw_lock.release_write()
