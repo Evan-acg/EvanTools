@@ -1,3 +1,5 @@
 """存储层包初始化"""
 
-# 暂时为空，后续添加存储类
+from .memory_store import InMemoryStore
+
+__all__ = ["InMemoryStore"]
