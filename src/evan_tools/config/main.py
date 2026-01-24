@@ -1,11 +1,15 @@
+import logging
 import os
 import threading
+import time
 import typing as t
 from copy import deepcopy
 from pathlib import Path
 
 import pydash
 import yaml
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -42,6 +46,8 @@ _cfg: dict[str, t.Any] | None = None
 _config_path_keys: dict[Path, list[str]] = {}
 _file_cache: dict[Path, dict[str, t.Any]] = {}
 _rw_lock = RWLock()
+_last_reload_time: float = 0  # 上次检查文件的时间戳
+_reload_check_interval: float = 5.0  # 检查间隔（秒）
 
 
 # ============================================================
