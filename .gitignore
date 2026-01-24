@@ -39,3 +39,6 @@ uv.lock
 
 # Git worktrees
 .worktrees/
+
+# Local docs (untracked)
+.copilot-skills.md
