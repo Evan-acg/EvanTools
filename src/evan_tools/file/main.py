@@ -319,6 +319,13 @@ class PathGatherer:
                     dirs.clear()
                 if depth > max_depth:
                     continue
+
+                # 在进入子目录前应用排除规则，避免递归到被排除的目录
+                if self._config.excludes:
+                    dirs[:] = [
+                        d for d in dirs
+                        if not any(fnmatch.fnmatch(d, pat) for pat in self._config.excludes)
+                    ]
                 
                 # 选择要处理的项目
                 items = dirs if self._config.dir_only else files
@@ -352,19 +359,24 @@ class PathGatherer:
             
             # 处理根路径本身
             try:
-                if path.exists():
-                    if path.is_file():
-                        if not self._config.dir_only and self._should_include(path):
-                            yield path
-                            count += 1
-                            self._notify_progress(count)
-                    elif path.is_dir():
-                        if self._config.dir_only and self._should_include(path):
-                            yield path
-                            count += 1
-                            self._notify_progress(count)
+                if not path.exists():
+                    continue
+
+                if path.is_file():
+                    if not self._config.dir_only and self._should_include(path):
+                        yield path
+                        count += 1
+                        self._notify_progress(count)
+                    continue
+
+                if path.is_dir():
+                    if self._config.dir_only and self._should_include(path):
+                        yield path
+                        count += 1
+                        self._notify_progress(count)
             except OSError as e:
                 self._handle_error(path, e)
+                continue
             
             if not path.is_dir():
                 continue
