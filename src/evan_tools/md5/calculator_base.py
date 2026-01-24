@@ -122,11 +122,12 @@ class HashCalculator(ABC):
         Returns:
             格式化的文件大小字符串
         """
+        size_float = float(size_bytes)
         for unit in ["B", "KB", "MB", "GB", "TB"]:
-            if size_bytes < 1024.0:
+            if size_float < 1024.0:
                 if unit == "B":
-                    return f"{size_bytes:.0f} {unit}"
-                return f"{size_bytes:.2f} {unit}"
-            size_bytes /= 1024.0
+                    return f"{size_float:.0f} {unit}"
+                return f"{size_float:.2f} {unit}"
+            size_float /= 1024.0
 
-        return f"{size_bytes:.2f} PB"
+        return f"{size_float:.2f} PB"
