@@ -238,7 +238,9 @@ def get_config(path: None = None, default: t.Any = None) -> t.Any: ...
 
 def get_config(path: PathT | None = None, default: t.Any = None) -> t.Any:
     """拿到完整配置（读锁）+ 自动检查文件变化"""
-    _reload_if_needed()
+    reloaded = _reload_if_needed()
+    if reloaded:
+        logger.info(f"配置热加载完成")
 
     _rw_lock.acquire_read()
     try:
@@ -246,7 +248,9 @@ def get_config(path: PathT | None = None, default: t.Any = None) -> t.Any:
         _o = deepcopy(_cfg)
         if path is None:
             return _o
-        return pydash.get(_o, path, default)
+        result = pydash.get(_o, path, default)
+        logger.debug(f"读取配置: {path}")
+        return result
     finally:
         _rw_lock.release_read()
 
