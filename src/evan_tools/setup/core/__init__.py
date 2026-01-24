@@ -12,6 +12,7 @@ from .exceptions import (
     SetupError,
 )
 from .models import BuildResult, CleanResult, DeployResult
+from .orchestrator import Orchestrator
 from .protocols import BuilderProtocol, CleanerProtocol, DeployerProtocol
 
 __all__ = [
@@ -31,4 +32,6 @@ __all__ = [
     "BuilderProtocol",
     "DeployerProtocol",
     "CleanerProtocol",
+    # 编排器
+    "Orchestrator",
 ]
