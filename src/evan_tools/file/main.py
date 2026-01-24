@@ -1,10 +1,10 @@
+import fnmatch
 import os
 import sys
 import typing as t
-from pathlib import Path
-from enum import Enum
 from dataclasses import dataclass, field
-import fnmatch
+from enum import Enum
+from pathlib import Path
 
 
 class SortBy(Enum):
