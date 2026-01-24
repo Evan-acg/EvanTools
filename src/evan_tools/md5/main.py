@@ -10,8 +10,8 @@ Note: 这个模块已经过重构，现在基于新的 API 实现。
 import typing as t
 from pathlib import Path
 
-from evan_tools.md5.api import calculate_hash
-from evan_tools.md5.config import HashConfig
+from .api import calculate_hash
+from .config import HashConfig
 
 
 class MD5Result(t.NamedTuple):
@@ -28,14 +28,14 @@ def calc_sparse_md5(
     item: Path, buffer_size: int = 8 * 1024 * 1024, segments: int = 10
 ) -> MD5Result:
     """计算文件的稀疏 MD5 值（快速模式）
-    
+
     这个函数现已基于新的计算器 API 实现，但保留原有签名以保持兼容性。
-    
+
     Args:
         item: 文件路径
         buffer_size: 缓冲区大小，默认 8MB
         segments: 稀疏采样段数，默认 10
-    
+
     Returns:
         MD5Result: 包含计算结果的 NamedTuple
     """
@@ -51,17 +51,15 @@ def calc_sparse_md5(
     )
 
 
-def calc_full_md5(
-    item: Path, buffer_size: int = 8 * 1024 * 1024
-) -> MD5Result:
+def calc_full_md5(item: Path, buffer_size: int = 8 * 1024 * 1024) -> MD5Result:
     """计算文件的完整 MD5 值
-    
+
     这个函数现已基于新的计算器 API 实现，但保留原有签名以保持兼容性。
-    
+
     Args:
         item: 文件路径
         buffer_size: 缓冲区大小，默认 8MB
-    
+
     Returns:
         MD5Result: 包含计算结果的 NamedTuple
     """

@@ -4,18 +4,17 @@
 """
 
 # 导出主要 API
-from evan_tools.md5.api import calculate_hash
-from evan_tools.md5.config import HashConfig
-from evan_tools.md5.result import HashResult
-from evan_tools.md5.exceptions import (
-    HashCalculationError,
+# 导出旧 API 用于向后兼容
+from .api import calculate_hash
+from .config import HashConfig
+from .exceptions import (
     FileAccessError,
     FileReadError,
+    HashCalculationError,
     InvalidConfigError,
 )
-
-# 导出旧 API 用于向后兼容
-from evan_tools.md5.main import calc_full_md5, calc_sparse_md5, MD5Result
+from .main import MD5Result, calc_full_md5, calc_sparse_md5
+from .result import HashResult
 
 __all__ = [
     # 新 API

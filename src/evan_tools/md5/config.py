@@ -5,8 +5,8 @@ MD5 模块配置管理
 """
 
 from dataclasses import dataclass
-from evan_tools.md5.exceptions import InvalidConfigError
 
+from .exceptions import InvalidConfigError
 
 # 支持的哈希算法集合
 SUPPORTED_ALGORITHMS = {"md5"}
