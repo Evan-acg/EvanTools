@@ -209,9 +209,14 @@ def _reload_if_needed() -> bool:
 # ============================================================
 def load_config(path: Path | None = None) -> None:
     """从磁盘加载 YAML 配置（外部调用会获取写锁）。"""
+    logger.info(f"开始加载配置，路径: {path or 'config'}")
     _rw_lock.acquire_write()
     try:
         _load_config_unlocked(path)
+        logger.info("配置加载完成")
+    except Exception as e:
+        logger.error(f"配置加载失败: {e}")
+        raise
     finally:
         _rw_lock.release_write()
 
