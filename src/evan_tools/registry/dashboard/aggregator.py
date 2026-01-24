@@ -38,7 +38,7 @@ class StatsAggregator:
         all_stats = store.get_all_stats()
         rows = []
         
-        for cmd_name in sorted(all_stats.keys()):
+        for cmd_name in sorted(all_stats.keys(), key=str):
             stats = all_stats[cmd_name]
             rows.append([
                 stats.command_name,
@@ -53,15 +53,15 @@ class StatsAggregator:
     
     def get_command_tree_formatted(self, tree: dict[str | None, list[str]]) -> list[list[str]]:
         """获取格式化的命令树"""
-        rows = []
+        rows: list[list[str]] = []
         
-        for group in sorted(tree.keys()):
+        for group in sorted(tree.keys(), key=lambda x: x or ""):
             group_name = group if group != "_ungrouped" else "（全局）"
             commands = sorted(tree[group])
             
             for i, cmd in enumerate(commands):
                 if i == 0:
-                    rows.append([group_name, cmd])
+                    rows.append([group_name or "", cmd])
                 else:
                     rows.append(["", cmd])
         

@@ -54,7 +54,7 @@ class CommandIndex:
         lines = ["# 命令列表\n"]
         
         tree = self.get_command_tree()
-        for group in sorted(tree.keys()):
+        for group in sorted(tree.keys(), key=lambda x: x or ""):
             if group == "_ungrouped":
                 lines.append("## 全局命令\n")
             else:

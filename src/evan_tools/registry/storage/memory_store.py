@@ -59,8 +59,9 @@ class InMemoryStore:
     def get_all_stats(self) -> dict[str, PerformanceStats]:
         """获取所有命令的统计"""
         command_names = set(r.command_name for r in self._records)
-        return {
-            cmd: self.calculate_stats(cmd)
-            for cmd in command_names
-            if self.calculate_stats(cmd) is not None
-        }
+        stats_dict: dict[str, PerformanceStats] = {}
+        for cmd in command_names:
+            stat = self.calculate_stats(cmd)
+            if stat is not None:
+                stats_dict[cmd] = stat
+        return stats_dict
