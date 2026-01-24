@@ -3,4 +3,7 @@
 提供命令行接口，用于与编排器交互。
 """
 
-__all__ = ["commands"]
+from .commands import create_orchestrator, run_cli
+
+__all__ = ["create_orchestrator", "run_cli"]
+

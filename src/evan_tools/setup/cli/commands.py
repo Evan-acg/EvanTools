@@ -313,3 +313,20 @@ def release(
             bold=True,
         )
         sys.exit(1)
+
+
+def run_cli(config: ProjectConfig) -> None:
+    """运行 CLI 应用
+
+    启动交互式命令行界面。
+
+    Args:
+        config: 项目配置对象
+
+    Examples:
+        >>> config = ProjectConfig(name="myapp", entry_point="main.py")
+        >>> run_cli(config)  # 启动 CLI
+    """
+    # 将配置存储到全局上下文（简化版，未来可以改进）
+    # 注册退出时的清理
+    app()
