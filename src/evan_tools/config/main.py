@@ -115,19 +115,37 @@ def _load_config_unlocked(path: Path | None = None) -> None:
     global _cfg, _config_path_keys, _file_cache
 
     base = Path.cwd() / "config" if path is None else Path(path)
-    config_paths = _scan_yaml_files(base)
+    
+    try:
+        config_paths = _scan_yaml_files(base)
+    except OSError as e:
+        logger.error(f"无法扫描配置目录 {base}: {e}")
+        raise
+
+    if not config_paths:
+        logger.warning(f"未找到任何配置文件在 {base}")
 
     merged: dict[str, t.Any] = {}
     _config_path_keys.clear()
 
-    # sorted by priority
-
     contents: list[dict[str, t.Any]] = []
+    loaded_count = 0
+
     for p in config_paths:
         item = _read_yaml_cached(p)
-        key_paths = _collect_key_paths(item)
-        _config_path_keys[p] = key_paths
-        contents.append(item)
+        if item:  # 只统计成功加载的
+            loaded_count += 1
+            key_paths = _collect_key_paths(item)
+            _config_path_keys[p] = key_paths
+            contents.append(item)
+        else:
+            logger.debug(f"跳过配置文件 {p}（为空或加载失败）")
+
+    # 如果一个配置文件都没加载成功，抛出异常
+    if config_paths and loaded_count == 0:
+        raise RuntimeError(f"所有配置文件加载失败，共尝试 {len(config_paths)} 个")
+
+    logger.info(f"成功加载 {loaded_count} 个配置文件")
 
     sorted_contents = sorted(contents, key=lambda o: o.get("priority", -1))
 
