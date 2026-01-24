@@ -36,3 +36,6 @@ play/
 
 # uv lock file
 uv.lock
+
+# Git worktrees
+.worktrees/
