@@ -117,7 +117,7 @@ def _load_config_unlocked(path: Path | None = None) -> None:
 
     base = Path.cwd() / "config" if path is None else Path(path)
     _config_base_path = base  # 保存配置路径
-    
+
     try:
         config_paths = _scan_yaml_files(base)
     except OSError as e:
@@ -162,7 +162,7 @@ def _reload_if_needed() -> bool:
     global _cfg, _last_reload_time
 
     current_time = time.time()
-    
+
     # 检查是否在时间窗口内，如果是则跳过检查
     if current_time - _last_reload_time < _reload_check_interval:
         return False
@@ -280,7 +280,7 @@ def sync_config() -> None:
             try:
                 with path.open("w", encoding="utf-8") as f:
                     yaml.safe_dump(new_content, f, allow_unicode=True, sort_keys=False)
-                
+
                 # 更新缓存 mtime，避免下次立即重加载
                 mtime = path.stat().st_mtime
                 _file_cache[path] = {
