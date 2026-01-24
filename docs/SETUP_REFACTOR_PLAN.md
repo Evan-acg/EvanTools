@@ -21,46 +21,47 @@
 - [x] 创建 git worktree
 - [x] 运行基准测试（确认环境）
 - [x] 生成头脑风暴报告
-- [ ] 提交初始状态: `git commit -m "chore(setup): 启动重构 - 创建工作区和分析报告"`
+- [x] 提交初始状态: `git commit -m "chore(setup): 启动重构 - 创建工作区和分析报告"`
 
 ---
 
-## 阶段 1: 基础设施搭建（Foundation）
+## 阶段 1: 基础设施搭建（Foundation） ✅ 已完成
 
 ### 1.1 创建核心目录结构
-- [ ] 创建 `src/evan_tools/setup/core/` 目录
-- [ ] 创建 `src/evan_tools/setup/builders/` 目录
-- [ ] 创建 `src/evan_tools/setup/deployers/` 目录
-- [ ] 创建 `src/evan_tools/setup/cleaners/` 目录
-- [ ] 创建 `src/evan_tools/setup/cli/` 目录
-- [ ] 创建 `src/evan_tools/setup/utils/` 目录
-- [ ] 创建 `tests/setup/` 目录（测试根目录）
+- [x] 创建 `src/evan_tools/setup/core/` 目录
+- [x] 创建 `src/evan_tools/setup/builders/` 目录
+- [x] 创建 `src/evan_tools/setup/deployers/` 目录
+- [x] 创建 `src/evan_tools/setup/cleaners/` 目录
+- [x] 创建 `src/evan_tools/setup/cli/` 目录
+- [x] 创建 `src/evan_tools/setup/utils/` 目录
+- [x] 创建 `tests/setup/` 目录（测试根目录）
 
 ### 1.2 定义核心抽象
-- [ ] 创建 `core/exceptions.py` - 定义异常层次
+- [x] 创建 `core/exceptions.py` - 定义异常层次
   - `SetupError`
   - `BuildError`
   - `DeployError`
   - `CleanError`
   - `ConfigValidationError`
 
-- [ ] 创建 `core/protocols.py` - 定义接口协议
+- [x] 创建 `core/protocols.py` - 定义接口协议
   - `BuilderProtocol`
   - `DeployerProtocol`
   - `CleanerProtocol`
-  - `ValidatorProtocol`
 
-- [ ] 创建 `core/models.py` - 定义数据模型
+- [x] 创建 `core/models.py` - 定义数据模型
   - `BuildResult`
   - `DeployResult`
   - `CleanResult`
 
-- [ ] 编写 `tests/setup/core/test_exceptions.py`
-- [ ] 编写 `tests/setup/core/test_models.py`
+- [x] 创建 `core/config.py` - 重构配置类
+- [x] 编写 `tests/setup/core/test_exceptions.py`
+- [x] 编写 `tests/setup/core/test_models.py`
+- [x] 编写 `tests/setup/core/test_config.py`
 
 ### 1.3 提交
-- [ ] 运行测试: `uv run pytest tests/setup/core/ -v`
-- [ ] 提交: `git commit -m "feat(setup): 创建核心抽象层（异常、协议、模型）"`
+- [x] 运行测试: `uv run pytest tests/setup/core/ -v` (37 passed)
+- [x] 提交: `git commit -m "feat(setup): 创建核心抽象层（异常、协议、模型）"`
 
 ---
 
