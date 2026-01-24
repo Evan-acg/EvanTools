@@ -68,14 +68,26 @@ def _read_yaml_cached(path: Path) -> dict[str, t.Any]:
     """读 YAML（带缓存 + mtime 检查）。"""
     global _file_cache
 
-    mtime = path.stat().st_mtime
+    try:
+        mtime = path.stat().st_mtime
+    except OSError as e:
+        logger.warning(f"无法访问配置文件 {path}: {e}")
+        return {}
+
     cached = _file_cache.get(path)
 
     if cached and cached["mtime"] == mtime:
         return cached["content"]
 
-    with path.open("r", encoding="utf-8") as f:
-        content = yaml.safe_load(f) or {}
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            content = yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        logger.error(f"YAML 解析失败 {path}: {e}")
+        return {}
+    except OSError as e:
+        logger.warning(f"文件读取失败 {path}: {e}")
+        return {}
 
     _file_cache[path] = {
         "mtime": mtime,
