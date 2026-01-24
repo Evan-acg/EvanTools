@@ -2,5 +2,6 @@
 
 from .models import ExecutionRecord, PerformanceStats
 from .tracker import ExecutionTracker
+from .monitor import PerformanceMonitor
 
-__all__ = ["ExecutionRecord", "PerformanceStats", "ExecutionTracker"]
+__all__ = ["ExecutionRecord", "PerformanceStats", "ExecutionTracker", "PerformanceMonitor"]
