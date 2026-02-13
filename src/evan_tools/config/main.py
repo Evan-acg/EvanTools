@@ -58,7 +58,7 @@ def load_config(path: Path | None = None) -> None:
             logger.info("Configuration loaded successfully")
         except Exception as e:
             logger.error(f"Failed to load configuration: {e}")
-            raise
+            return
         return
 
     if not path.suffix:
@@ -76,7 +76,7 @@ def load_config(path: Path | None = None) -> None:
                         logger.info("Configuration loaded successfully")
                     except Exception as e:
                         logger.error(f"Failed to load configuration: {e}")
-                        raise
+                        return
                     return
             path = path.with_suffix(".yaml")
 
@@ -87,7 +87,7 @@ def load_config(path: Path | None = None) -> None:
         logger.info("Configuration loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load configuration: {e}")
-        raise
+        return
 
 
 PathT = t.Union[t.Hashable, t.List[t.Hashable]]
