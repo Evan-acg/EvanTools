@@ -43,7 +43,7 @@ def load_config(path: Path | None = None) -> None:
         ValueError: 如果文件格式不受支持。
     """
     if path is None:
-        path = Path("config")
+        path = Path("configs")
     else:
         path = Path(path)
 
@@ -67,8 +67,8 @@ def load_config(path: Path | None = None) -> None:
         elif (path.parent / f"{path.name}.yml").exists():
             path = path.parent / f"{path.name}.yml"
         else:
-            if path.name == "config":
-                path = path.parent / "config"
+            if path.name == "configs":
+                path = path.parent / "configs"
                 if path.is_dir():
                     logger.info(f"Loading configuration from directory: {path}")
                     try:
@@ -117,7 +117,7 @@ def get_config(path: PathT | None = None, default: t.Any = None) -> t.Any:
         配置值，如果未找到则返回默认值。
 
     示例:
-        >>> load_config("config.yaml")
+        >>> load_config("configs")
         >>> get_config("database.host")
         'localhost'
         >>> get_config(["database", "port"], 5432)
