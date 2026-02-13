@@ -47,6 +47,10 @@ def load_config(path: Path | None = None) -> None:
     else:
         path = Path(path)
 
+    if not path.exists():
+        print(f"Configuration path does not exist: {path}")
+        return
+
     if path.is_dir():
         logger.info(f"Loading configuration from directory: {path}")
         try:
