@@ -88,7 +88,7 @@ class PyInstallerBuilder(BuilderBase):
 
         # 添加输出目录选项
         cmd.extend(["--distpath", str(self.output_dir)])
-        cmd.extend(["--buildpath", str(self._build_dir)])
+        # cmd.extend(["--buildpath", str(self._build_dir)])
 
         # 添加 spec 文件选项
         spec_file = self._get_spec_file_path(config.name)
