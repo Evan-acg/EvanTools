@@ -62,6 +62,18 @@ class ConfigManager:
         self._base_path: Optional[Path] = None
         self._default_config: dict[str, Any] = {}
 
+    def initialize_empty(self) -> None:
+        """初始化空配置，不绑定文件路径。"""
+        self._lock.acquire_write()
+        try:
+            self._cache.set({})
+            self._config_path = None
+            self._base_path = None
+            self._default_config = {}
+            self._reload_controller.reset()
+        finally:
+            self._lock.release_write()
+
     def load(
         self,
         config_path: str | Path,

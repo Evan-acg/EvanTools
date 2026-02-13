@@ -38,8 +38,10 @@ def load_config(path: Path | None = None) -> None:
             如果提供目录，则扫描并合并其中所有 YAML 文件。
             如果提供文件，则仅加载该文件。
 
+    说明:
+        如果配置文件/目录不存在，将初始化为空配置并返回。
+
     抛出:
-        FileNotFoundError: 如果配置文件/目录不存在。
         ValueError: 如果文件格式不受支持。
     """
     if path is None:
@@ -49,6 +51,7 @@ def load_config(path: Path | None = None) -> None:
 
     if not path.exists():
         print(f"Configuration path does not exist: {path}")
+        _get_manager().initialize_empty()
         return
 
     if path.is_dir():
