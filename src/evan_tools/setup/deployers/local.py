@@ -100,7 +100,7 @@ class LocalDeployer(DeployerBase):
                 )
             else:
                 # 处理目录
-                target_source = target / source.name
+                target_source = target
                 files_copied, bytes_copied = self._copy_tree(
                     source, target_source, exist_ok=True
                 )
